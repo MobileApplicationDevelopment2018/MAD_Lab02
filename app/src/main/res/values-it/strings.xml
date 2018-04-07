@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MAD Laboratorio 1</string>
+    <string name="show_profile">Mostra Profilo</string>
+    <string name="edit_profile">Modifica Profilo</string>
+    <string name="save_profile">Salva Profilo</string>
+
+    <string name="profile_picture">Immagine profilo</string>
+    <string name="send_email">Invia e-mail</string>
+    <string name="show_location">Visualizza città</string>
+    <string name="lent_books">Libri prestati</string>
+    <string name="borrowed_books">Libri ricevuti</string>
+    <string name="to_be_returned">Da restituire</string>
+
+    <string name="hint_email">Email</string>
+    <string name="hint_username">Username</string>
+    <string name="hint_biography">Descrizione</string>
+    <string name="hint_location">Città</string>
+
+    <string name="default_email">email@default.com</string>
+    <string name="default_username">NoFAndroid</string>
+    <string name="default_city">Torino</string>
+    <string name="default_biography">Nessuna biografia inserita</string>
+
+    <string name="camera_option">Acquisisci un\'immagine dalla fotocamera</string>
+    <string name="gallery_option">Scegli un\'immagine dalla galleria</string>
+    <string name="reset_option">Ripristina l\'immagine di default</string>
+
+    <string name="invalid_username">Il campo username non può essere vuoto</string>
+    <string name="invalid_email">Formato e-mail non valido</string>
+    <string name="invalid_location_wrong">Il campo città può contenere solo caratteri alfabetici</string>
+    <string name="invalid_location_empty">Il campo città non può essere vuoto</string>
+    <string name="discard_changes">Abbandonare le modifiche?</string>
+    <string name="incorrect_values">Alcuni campi contengono dati errati.\nPer favore, controllali</string>
+    <string name="failed_obtain_picture">Si è verificato un errore durante l\'ottenimento dell\'immagine</string>
+
+    <string name="number_zero">0</string>
+</resources>

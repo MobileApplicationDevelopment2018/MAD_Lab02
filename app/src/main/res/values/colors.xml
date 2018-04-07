@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">@color/light_green_500</color>
+    <color name="colorPrimaryDark">@color/light_green_700</color>
+    <color name="colorAccent">@color/light_green_300</color>
+
+    <color name="colorText">@android:color/primary_text_light</color>
+    <color name="colorTextAccent">@color/light_green_500</color>
+    <color name="colorIcon">@android:color/white</color>
+    <color name="colorGrey">@android:color/darker_gray</color>
+
+    <color name="light_green_100">#DCEDC8</color>
+    <color name="light_green_200">#C5E1A5</color>
+    <color name="light_green_300">#AED581</color>
+    <color name="light_green_400">#9CCC65</color>
+    <color name="light_green_500">#8BC34A</color>
+    <color name="light_green_600">#7CB342</color>
+    <color name="light_green_700">#689F38</color>
+    <color name="light_green_800">#558B2F</color>
+    <color name="light_green_900">#33691E</color>
+</resources>

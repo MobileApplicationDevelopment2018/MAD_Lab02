@@ -1,0 +1,37 @@
+<resources>
+    <string name="app_name">MAD Laboratory 1</string>
+    <string name="show_profile">Show Profile</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="save_profile">Save Profile</string>
+
+    <string name="profile_picture">Profile picture</string>
+    <string name="send_email">Send e-mail</string>
+    <string name="show_location">Show location</string>
+    <string name="lent_books">Lent books</string>
+    <string name="borrowed_books">Borrowed books</string>
+    <string name="to_be_returned">To be returned</string>
+
+    <string name="hint_email">Email</string>
+    <string name="hint_username">Username</string>
+    <string name="hint_biography">Biography</string>
+    <string name="hint_location">Location</string>
+
+    <string name="default_email">email@default.com</string>
+    <string name="default_username">NoFAndroid</string>
+    <string name="default_city">Turin</string>
+    <string name="default_biography">No biography inserted yet</string>
+
+    <string name="camera_option">Take picture from camera</string>
+    <string name="gallery_option">Choose picture from gallery</string>
+    <string name="reset_option">Reset the default picture</string>
+
+    <string name="invalid_username">Username must not be empty</string>
+    <string name="invalid_email">Invalid e-mail format</string>
+    <string name="invalid_location_wrong">Location can contain only alphabetic characters</string>
+    <string name="invalid_location_empty">Location must not be empty</string>
+    <string name="discard_changes">Discard changes?</string>
+    <string name="incorrect_values">Some fields contain invalid data.\nPlease, check them</string>
+    <string name="failed_obtain_picture">Something went wrong while obtaining the picture</string>
+
+    <string name="number_zero">0</string>
+</resources>
