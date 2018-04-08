@@ -1,26 +1,24 @@
 package it.polito.mad.lab02;
 
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.Locale;
 
 public class ShowProfile extends AppCompatActivity {
 
-    private static final String USER_PROFILE_KEY = "user_profile";
-    private static final String PROFILE_ID = "001";
-    private static final int EDIT_PROFILE = 1;
+    private static final int RC_EDIT_PROFILE = 1;
     private UserProfile profile;
 
     @Override
@@ -28,27 +26,28 @@ public class ShowProfile extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_show_profile);
 
-        // Initialize the LocalUserProfile
+        // Initialize the Profile instances
         if (savedInstanceState != null) {
-            // If the profile was saved, load it
-            profile = (UserProfile) savedInstanceState.getSerializable(USER_PROFILE_KEY);
-        }
-
-        if (profile == null) {
-            // Otherwise, since now no backend server exists, it is loaded either from shared preferences or
-            // using default values; read-only data are set to default values anyway.
-            profile = new UserProfile(this, PROFILE_ID, this.getPreferences(Context.MODE_PRIVATE));
+            // If they was saved, load them
+            profile = (UserProfile) savedInstanceState.getSerializable(UserProfile.PROFILE_INFO_KEY);
+        } else {
+            // Otherwise, obtain them through the intent
+            profile = (UserProfile) this.getIntent().getSerializableExtra(UserProfile.PROFILE_INFO_KEY);
         }
 
         // Fill the views with the data
+        assert profile != null;
         fillViews(profile);
 
         // Set the toolbar
         final Toolbar toolbar = findViewById(R.id.sp_toolbar);
         setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
 
         // MailTo button
         final ImageButton mailToButton = findViewById(R.id.sp_mail_icon);
+        mailToButton.setVisibility(profile.isLocal() ? View.GONE : View.VISIBLE);
         mailToButton.setOnClickListener(v -> {
             Uri uri = Uri.parse("mailto:" + profile.getEmail());
             Intent mailTo = new Intent(Intent.ACTION_SENDTO, uri);
@@ -69,6 +68,16 @@ public class ShowProfile extends AppCompatActivity {
     }
 
     @Override
+    public boolean onSupportNavigateUp() {
+
+        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+        intent.putExtra(UserProfile.PROFILE_INFO_KEY, profile);
+        setResult(RESULT_OK, intent);
+        finish();
+        return true;
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_show_profile, menu);
         return true;
@@ -80,7 +89,7 @@ public class ShowProfile extends AppCompatActivity {
             case R.id.sp_edit_profile:
                 Intent toEdit = new Intent(getApplicationContext(), EditProfile.class);
                 toEdit.putExtra(UserProfile.PROFILE_INFO_KEY, profile);
-                startActivityForResult(toEdit, EDIT_PROFILE);
+                startActivityForResult(toEdit, RC_EDIT_PROFILE);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -92,16 +101,13 @@ public class ShowProfile extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         switch (requestCode) {
-            case EDIT_PROFILE:
+            case RC_EDIT_PROFILE:
                 if (resultCode == RESULT_OK) {
-
                     profile = (UserProfile) data.getSerializableExtra(UserProfile.PROFILE_INFO_KEY);
                     // Update the views
                     fillViews(profile);
 
-                    SharedPreferences.Editor editor = this.getPreferences(Context.MODE_PRIVATE).edit();
-                    profile.save(PROFILE_ID, editor);
-                    editor.apply();
+                    Toast.makeText(this, R.string.success_save_data, Toast.LENGTH_LONG).show();
                 }
 
                 break;
@@ -117,7 +123,7 @@ public class ShowProfile extends AppCompatActivity {
         super.onSaveInstanceState(outState);
 
         // Save the values
-        outState.putSerializable(USER_PROFILE_KEY, profile);
+        outState.putSerializable(UserProfile.PROFILE_INFO_KEY, profile);
     }
 
     private void fillViews(UserProfile profile) {

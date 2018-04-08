@@ -1,6 +1,7 @@
 package it.polito.mad.lab02;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -16,13 +17,13 @@ import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Patterns;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,7 +40,7 @@ public class EditProfile extends AppCompatActivity {
     private static final int GALLERY = 3;
     private static final int PERMISSIONS_REQUEST_EXTERNAL_STORAGE = 4;
 
-    private EditText email, username, location, biography;
+    private EditText username, location, biography;
     private ImageView imageView;
     private BottomSheetDialog bottomSheetDialog;
     private boolean imageChanged;
@@ -50,17 +51,10 @@ public class EditProfile extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_profile);
 
-        email = findViewById(R.id.ep_input_email);
         username = findViewById(R.id.ep_input_username);
         location = findViewById(R.id.ep_input_location);
         biography = findViewById(R.id.ep_input_biography);
         imageView = findViewById(R.id.ep_profile_picture);
-
-        // Set the toolbar
-        final Toolbar toolbar = findViewById(R.id.ep_toolbar);
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
 
         // Initialize the Profile instances
         if (savedInstanceState != null) {
@@ -74,6 +68,12 @@ public class EditProfile extends AppCompatActivity {
             currentProfile = new UserProfile(originalProfile);
             imageChanged = false;
         }
+
+        // Set the toolbar
+        final Toolbar toolbar = findViewById(R.id.ep_toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
 
         // Fill the views with the data
         fillViews(currentProfile);
@@ -117,16 +117,16 @@ public class EditProfile extends AppCompatActivity {
                 new Utilities.GenericTextWatcher(username, getString(R.string.invalid_username),
                         string -> !Utilities.isNullOrWhitespace(string)));
 
-        email.addTextChangedListener(
-                new Utilities.GenericTextWatcher(email, getString(R.string.invalid_email),
-                        string -> Patterns.EMAIL_ADDRESS.matcher(string).matches()));
-
         location.addTextChangedListener(
                 new Utilities.GenericTextWatcherEmptyOrInvalid(location,
                         getString(R.string.invalid_location_empty),
                         getString(R.string.invalid_location_wrong),
                         string -> !Utilities.isNullOrWhitespace(string),
                         string -> Utilities.isValidLocation(string)));
+
+        if (savedInstanceState == null && originalProfile == null) {
+            Toast.makeText(this, R.string.complete_profile, Toast.LENGTH_LONG).show();
+        }
     }
 
     @Override
@@ -150,9 +150,7 @@ public class EditProfile extends AppCompatActivity {
         super.onOptionsItemSelected(item);
         switch (item.getItemId()) {
             case R.id.ep_save_profile:
-                if (commitChanges()) {
-                    finish();
-                }
+                commitChanges();
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -234,7 +232,7 @@ public class EditProfile extends AppCompatActivity {
                         try {
                             Utilities.copyFile(new File(Utilities.getRealPathFromURI(this, data.getData())), imageFileGallery);
                         } catch (IOException e) {
-                            showErrorMessage(getString(R.string.failed_obtain_picture));
+                            Utilities.showErrorMessage(this, R.string.failed_obtain_picture);
                         }
 
                         currentProfile.update(imageFileGallery.getAbsolutePath());
@@ -271,7 +269,6 @@ public class EditProfile extends AppCompatActivity {
     }
 
     private void fillViews(UserProfile profile) {
-        email.setText(profile.getEmail());
         username.setText(profile.getUsername());
         location.setText(profile.getLocation());
         biography.setText(profile.getBiography());
@@ -282,20 +279,19 @@ public class EditProfile extends AppCompatActivity {
     }
 
     private void updateProfileInfo(UserProfile profile) {
-        String emailStr = email.getText().toString();
         String usernameStr = username.getText().toString();
         String locationStr = location.getText().toString();
         String biographyStr = biography.getText().toString();
 
-        profile.update(emailStr, usernameStr, locationStr, biographyStr);
+        profile.update(usernameStr, locationStr, biographyStr);
     }
 
-    private boolean commitChanges() {
+    private void commitChanges() {
         updateProfileInfo(currentProfile);
 
         if (!currentProfile.isValid()) {
-            showErrorMessage(getString(R.string.incorrect_values));
-            return false;
+            Utilities.showErrorMessage(this, R.string.incorrect_values);
+            return;
         }
 
         // Save the image permanently
@@ -303,29 +299,32 @@ public class EditProfile extends AppCompatActivity {
             File sourceFile = new File(currentProfile.getImagePath());
             File destinationFile = new File(this.getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES), IMAGE_PATH);
             if (!sourceFile.renameTo(destinationFile)) {
-                showErrorMessage(getString(R.string.failed_obtain_picture));
-                return false;
+                Utilities.showErrorMessage(this, R.string.failed_obtain_picture);
+                return;
             }
             currentProfile.update(destinationFile.getAbsolutePath());
         }
 
-        if (!originalProfile.equals(currentProfile) || this.imageChanged) {
-            currentProfile.trimFields();
+        if (originalProfile == null || !originalProfile.equals(currentProfile) || this.imageChanged) {
 
-            Intent intent = new Intent(getApplicationContext(), ShowProfile.class);
-            intent.putExtra(UserProfile.PROFILE_INFO_KEY, currentProfile);
-            setResult(RESULT_OK, intent);
+            ProgressDialog dialog = ProgressDialog.show(this, "",
+                    "Saving your personal data. Please wait...", true);
+
+            currentProfile.saveToFirebase((t) -> {
+                Intent intent = new Intent(getApplicationContext(), ShowProfile.class);
+                intent.putExtra(UserProfile.PROFILE_INFO_KEY, currentProfile);
+                setResult(RESULT_OK, intent);
+                dialog.cancel();
+                finish();
+            }, (t) -> {
+                dialog.cancel();
+                Utilities.showErrorMessage(this, R.string.failed_save_data);
+            });
+
         } else {
             setResult(RESULT_CANCELED);
+            finish();
         }
-        return true;
-    }
-
-    private void showErrorMessage(String message) {
-        new AlertDialog.Builder(this)
-                .setMessage(message)
-                .setPositiveButton(getString(android.R.string.ok), null)
-                .show();
     }
 
     private void cleanupAndFinish() {

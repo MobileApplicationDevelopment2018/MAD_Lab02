@@ -1,5 +1,6 @@
 package it.polito.mad.lab02;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -28,8 +29,11 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private static final int RC_SIGN_IN = 1;
+    private static final int RC_COMPLETE_REGISTRATION = 2;
+    private static final int RC_SHOW_PROFILE = 3;
 
     private FirebaseAuth mAuth;
+    private UserProfile localProfile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,10 +52,22 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-        updateNavigationView();
 
+        // Profile already cached locally
+        if (savedInstanceState != null) {
+            localProfile = (UserProfile) savedInstanceState.getSerializable(UserProfile.PROFILE_INFO_KEY);
+            if (localProfile != null) {
+                updateNavigationView();
+                return;
+            }
+        }
+
+        // Profile to be obtained from database
+        localProfile = new UserProfile();
         if (mAuth.getCurrentUser() != null) {
-            showSnackBar(getString(R.string.sign_in_welcome_back) + " " + mAuth.getCurrentUser().getDisplayName());
+            loadProfileFromFirebase();
+        } else {
+            updateNavigationView();
         }
     }
 
@@ -65,11 +81,11 @@ public class MainActivity extends AppCompatActivity
         TextView email = header.findViewById(R.id.nh_email);
         drawer.getMenu().clear();
 
-        if (mAuth.getCurrentUser() != null) {
+        if (!localProfile.isAnonymous()) {
             //TODO: set the profile picture
-            username.setText(mAuth.getCurrentUser().getDisplayName());
+            username.setText(localProfile.getUsername());
             email.setVisibility(View.VISIBLE);
-            email.setText(mAuth.getCurrentUser().getEmail());
+            email.setText(localProfile.getEmail());
             drawer.inflateMenu(R.menu.activity_main_drawer_signed_in);
         } else {
             //TODO: reset the profile picture
@@ -78,8 +94,9 @@ public class MainActivity extends AppCompatActivity
             email.setText("");
             drawer.inflateMenu(R.menu.activity_main_drawer);
         }
-    }
 
+        drawer.getMenu().getItem(0).setChecked(true);
+    }
 
     @Override
     public void onBackPressed() {
@@ -96,6 +113,10 @@ public class MainActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         switch (item.getItemId()) {
 
+            case R.id.nav_explore:
+                Toast.makeText(this, "Explore clicked", Toast.LENGTH_LONG).show();
+                break;
+
             case R.id.nav_sign_in:
                 signIn();
                 break;
@@ -106,7 +127,8 @@ public class MainActivity extends AppCompatActivity
 
             case R.id.nav_profile:
                 Intent toShowProfile = new Intent(getApplicationContext(), ShowProfile.class);
-                startActivity(toShowProfile);
+                toShowProfile.putExtra(UserProfile.PROFILE_INFO_KEY, localProfile);
+                startActivityForResult(toShowProfile, RC_SHOW_PROFILE);
                 break;
 
             case R.id.nav_sign_out:
@@ -119,37 +141,55 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putSerializable(UserProfile.PROFILE_INFO_KEY, localProfile);
+    }
+
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == RC_SIGN_IN) {
-            IdpResponse response = IdpResponse.fromResultIntent(data);
+        switch (requestCode) {
+            case RC_SIGN_IN:
+                IdpResponse response = IdpResponse.fromResultIntent(data);
 
-            // Successfully signed in
-            if (resultCode == RESULT_OK && mAuth.getCurrentUser() != null) {
-
-                int welcomeStringId = R.string.sign_in_welcome;
-                if (mAuth.getCurrentUser().getMetadata() != null &&
-                        mAuth.getCurrentUser().getMetadata().getCreationTimestamp() == mAuth.getCurrentUser().getMetadata().getLastSignInTimestamp()) {
-                    welcomeStringId = R.string.sign_in_welcome;
+                // Successfully signed in
+                if (resultCode == RESULT_OK && mAuth.getCurrentUser() != null) {
+                    loadProfileFromFirebase();
+                    return;
                 }
 
-                showSnackBar(getString(welcomeStringId) + " " + mAuth.getCurrentUser().getDisplayName());
-                updateNavigationView();
-                return;
-            }
+                if (response == null) {
+                    showToast(R.string.sign_in_cancelled);
+                    return;
+                }
 
-            if (response == null) {
-                showSnackBar(R.string.sign_in_cancelled);
-                return;
-            }
+                if (response.getError() != null && response.getError().getErrorCode() == ErrorCodes.NO_NETWORK) {
+                    showToast(R.string.sign_in_no_internet_connection);
+                    return;
+                }
 
-            if (response.getError() != null && response.getError().getErrorCode() == ErrorCodes.NO_NETWORK) {
-                showSnackBar(R.string.sign_in_no_internet_connection);
-                return;
-            }
+                showToast(R.string.sign_in_unknown_error);
+                break;
 
-            showSnackBar(R.string.sign_in_unknown_error);
+            case RC_COMPLETE_REGISTRATION:
+                if (resultCode == RESULT_OK) {
+                    localProfile = (UserProfile) data.getSerializableExtra(UserProfile.PROFILE_INFO_KEY);
+                    updateNavigationView();
+                }
+
+            case RC_SHOW_PROFILE:
+                if (resultCode == RESULT_OK) {
+                    localProfile = (UserProfile) data.getSerializableExtra(UserProfile.PROFILE_INFO_KEY);
+                    updateNavigationView();
+                }
+
+                break;
+
+            default:
+                break;
         }
     }
 
@@ -167,21 +207,62 @@ public class MainActivity extends AppCompatActivity
         AuthUI.getInstance()
                 .signOut(this)
                 .addOnSuccessListener(t -> {
-                    showSnackBar(R.string.sign_out_succeeded);
-                    updateNavigationView();
+                    onSignOut();
                 })
                 .addOnFailureListener(t -> {
-                    showSnackBar(R.string.sign_out_failed);
+                    showToast(R.string.sign_out_failed);
                 });
     }
 
-    private void showSnackBar(@StringRes int messageId) {
-        showSnackBar(getString(messageId));
+    private void onSignOut() {
+        showToast(R.string.sign_out_succeeded);
+        localProfile = new UserProfile();
+        updateNavigationView();
     }
 
-    private void showSnackBar(@NonNull String message) {
+    private void showToast(@StringRes int message) {
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+    }
+
+    private void showToast(@NonNull String message) {
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+    }
+
+    private void loadProfileFromFirebase() {
+        ProgressDialog dialog = ProgressDialog.show(this, "",
+                getString(R.string.fui_progress_dialog_loading), true);
+        UserProfile.loadFromFirebase(data -> {
+            dialog.cancel();
+            localProfile = data.getValue(UserProfile.class);
+
+            if (localProfile == null) {
+                completeRegistration();
+            } else {
+                updateNavigationView();
+                showToast(getString(R.string.sign_in_welcome_back) + " " + localProfile.getUsername());
+            }
+
+        }, error -> {
+            dialog.cancel();
+            Utilities.showErrorMessage(this, R.string.failed_load_data);
+            signOut();
+        });
+    }
+
+    private void completeRegistration() {
+
+        assert mAuth.getCurrentUser() != null;
+        localProfile = new UserProfile(this, mAuth.getCurrentUser());
+        localProfile.saveToFirebase();
+
+        String message = getString(R.string.sign_in_welcome) + " " + localProfile.getUsername();
         Snackbar.make(findViewById(R.id.main_coordinator_layout), message, Snackbar.LENGTH_LONG)
-                .show();
+                .setAction(R.string.edit_profile, v -> {
+                    Intent toEditProfile = new Intent(getApplicationContext(), EditProfile.class);
+                    toEditProfile.putExtra(UserProfile.PROFILE_INFO_KEY, localProfile);
+                    startActivityForResult(toEditProfile, RC_SHOW_PROFILE);
+                }).show();
+
+        updateNavigationView();
     }
 }
-

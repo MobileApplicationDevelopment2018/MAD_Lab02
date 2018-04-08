@@ -1,6 +1,7 @@
 package it.polito.mad.lab02;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -10,6 +11,8 @@ import android.media.ExifInterface;
 import android.net.Uri;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
+import android.support.annotation.StringRes;
+import android.support.v7.app.AlertDialog;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.widget.EditText;
@@ -25,6 +28,13 @@ import static android.provider.MediaStore.Video;
 
 class Utilities {
 
+    static void showErrorMessage(Context context, @StringRes int message) {
+        new AlertDialog.Builder(context)
+                .setMessage(context.getString(message))
+                .setPositiveButton(context.getString(android.R.string.ok), null)
+                .show();
+    }
+
     static boolean isValidLocation(String s) {
         return s != null && s.matches("((\\p{L}\\p{M}*)|\\p{Zs})+");
     }
@@ -39,6 +49,10 @@ class Utilities {
             }
         }
         return true;
+    }
+
+    static boolean equals(Object a, Object b) {
+        return a == b || (a != null) && (b != null) && a.equals(b);
     }
 
     static void copyFile(File sourceFile, File destFile) throws IOException {

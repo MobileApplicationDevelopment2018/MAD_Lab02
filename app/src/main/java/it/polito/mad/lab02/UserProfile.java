@@ -1,21 +1,30 @@
 package it.polito.mad.lab02;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.support.annotation.NonNull;
 import android.util.Patterns;
+
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserInfo;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.Exclude;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.io.Serializable;
 
 class UserProfile implements Serializable {
 
     static final String PROFILE_INFO_KEY = "profile_info_key";
-    private static final String EMAIL_PREFERENCE_KEY = "email";
-    private static final String USERNAME_PREFERENCE_KEY = "username";
-    private static final String LOCATION_PREFERENCE_KEY = "location";
-    private static final String BIOGRAPHY_PREFERENCE_KEY = "biography";
-    private static final String IMAGE_PREFERENCE_KEY = "image";
+
+    private static final String FIREBASE_USERS_KEY = "users";
+    private static final String FIREBASE_PROFILE_KEY = "profile";
 
     private String email;
     private String username;
@@ -27,6 +36,19 @@ class UserProfile implements Serializable {
     private int lentBooks;
     private int borrowedBooks;
     private int toBeReturnedBooks;
+
+    UserProfile() {
+        this.email = null;
+        this.username = null;
+        this.location = null;
+        this.biography = null;
+        this.imagePath = null;
+
+        this.rating = 0;
+        this.lentBooks = 0;
+        this.borrowedBooks = 0;
+        this.toBeReturnedBooks = 0;
+    }
 
     UserProfile(@NonNull UserProfile other) {
         this.email = other.getEmail();
@@ -42,61 +64,79 @@ class UserProfile implements Serializable {
         this.toBeReturnedBooks = other.getToBeReturnedBooks();
     }
 
-    UserProfile(@NonNull Context ctx, @NonNull String id, @NonNull SharedPreferences sharedPref) {
+    UserProfile(@NonNull Context context, FirebaseUser user) {
+        super();
 
-        this.email = sharedPref.getString(id + "_" + EMAIL_PREFERENCE_KEY, ctx.getString(R.string.default_email));
-        this.username = sharedPref.getString(id + "_" + USERNAME_PREFERENCE_KEY, ctx.getString(R.string.default_username));
-        this.location = sharedPref.getString(id + "_" + LOCATION_PREFERENCE_KEY, ctx.getString(R.string.default_city));
-        this.biography = sharedPref.getString(id + "_" + BIOGRAPHY_PREFERENCE_KEY, ctx.getString(R.string.default_biography));
+        if (user != null) {
+            this.email = user.getEmail();
+            this.username = user.getDisplayName();
 
-        this.imagePath = null;
-        this.imagePath = sharedPref.getString(id + "_" + IMAGE_PREFERENCE_KEY, null);
+            for (UserInfo profile : user.getProviderData()) {
+                if (this.username == null && profile.getDisplayName() != null) {
+                    this.username = profile.getDisplayName();
+                }
+            }
 
-        this.rating = 4.5f;
-        this.lentBooks = 18;
-        this.borrowedBooks = 24;
-        this.toBeReturnedBooks = 2;
+            if (this.username == null) {
+                this.username = getUsernameFromEmail(this.email);
+
+            }
+
+            this.username = this.username
+                    .trim().replaceAll("\\p{Zs}+", " ");
+
+            int maxLength = context.getResources().getInteger(R.integer.max_length_username);
+            if (this.username.length() > maxLength) {
+                this.username = this.username.substring(0, maxLength);
+            }
+
+            this.location = context.getString(R.string.default_city);
+        }
     }
 
-    void update(@NonNull String email, @NonNull String username, @NonNull String location, @NonNull String biography) {
-        this.email = email;
-        this.username = username;
-        this.location = location;
-        this.biography = biography;
+    static void loadFromFirebase(@NonNull OnDataLoadSuccess onSuccess, @NonNull OnDataLoadFailure onFailure) {
+
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        assert currentUser != null;
+
+        FirebaseDatabase.getInstance().getReference()
+                .child(FIREBASE_USERS_KEY)
+                .child(currentUser.getUid())
+                .child(FIREBASE_PROFILE_KEY)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        onSuccess.apply(dataSnapshot);
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        onFailure.apply(databaseError);
+                    }
+                });
+    }
+
+    private static String getUsernameFromEmail(@NonNull String email) {
+        return email.substring(0, email.indexOf('@'));
     }
 
     void update(String imagePath) {
         this.imagePath = imagePath;
     }
 
-    void trimFields() {
-        this.username = this.username.trim();
-        this.location = this.location.trim();
-        this.biography = this.biography.trim();
-        this.username = this.username.replaceAll("\\p{Zs}+", " ");
-        this.location = this.location.replaceAll("\\p{Zs}+", " ");
-        this.biography = this.biography.replaceAll("\\p{Zs}+", " ");
+    void update(@NonNull String username, @NonNull String location, @NonNull String biography) {
+        this.username = username;
+        this.location = location;
+        this.biography = biography;
     }
 
-    void save(@NonNull String id, @NonNull SharedPreferences.Editor sharedPrefEditor) {
-        sharedPrefEditor.putString(id + "_" + EMAIL_PREFERENCE_KEY, this.getEmail());
-        sharedPrefEditor.putString(id + "_" + USERNAME_PREFERENCE_KEY, this.getUsername());
-        sharedPrefEditor.putString(id + "_" + LOCATION_PREFERENCE_KEY, this.getLocation());
-        sharedPrefEditor.putString(id + "_" + BIOGRAPHY_PREFERENCE_KEY, this.getBiography());
-        if (this.imagePath != null) {
-            sharedPrefEditor.putString(id + "_" + IMAGE_PREFERENCE_KEY, this.imagePath);
+    private void trimFields() {
+        this.username = this.username.trim().replaceAll("\\p{Zs}+", " ");
+        this.location = this.location.trim().replaceAll("\\p{Zs}+", " ");
+
+        if (this.biography != null) {
+            this.biography = this.biography.trim().replaceAll("\\p{Zs}+", " ");
         }
-    }
-
-    boolean isValid() {
-        return Patterns.EMAIL_ADDRESS.matcher(email).matches() &&
-                !Utilities.isNullOrWhitespace(username) &&
-                !Utilities.isNullOrWhitespace(location) &&
-                Utilities.isValidLocation(location);
-    }
-
-    String getEmail() {
-        return this.email;
     }
 
     String getUsername() {
@@ -115,10 +155,6 @@ class UserProfile implements Serializable {
         return this.imagePath;
     }
 
-    Bitmap getImageBitmapOrDefault(@NonNull Context ctx, int targetWidth, int targetHeight) {
-        return Utilities.loadImage(this.imagePath, targetWidth, targetHeight, ctx.getResources(), R.drawable.default_header);
-    }
-
     float getRating() {
         return this.rating;
     }
@@ -135,6 +171,39 @@ class UserProfile implements Serializable {
         return this.toBeReturnedBooks;
     }
 
+    /* BEGIN GETTERS */
+    String getEmail() {
+        return this.email;
+    }
+
+    @Exclude
+    boolean isAnonymous() {
+        return this.email == null;
+    }
+    /* END GETTERS */
+
+    @Exclude
+    boolean isLocal() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        assert user != null;
+        assert this.email != null;
+
+        return this.email.equals(user.getEmail());
+    }
+
+    @Exclude
+    boolean isValid() {
+        return Patterns.EMAIL_ADDRESS.matcher(email).matches() &&
+                !Utilities.isNullOrWhitespace(username) &&
+                !Utilities.isNullOrWhitespace(location) &&
+                Utilities.isValidLocation(location);
+    }
+
+    @Exclude
+    Bitmap getImageBitmapOrDefault(@NonNull Context ctx, int targetWidth, int targetHeight) {
+        return Utilities.loadImage(this.imagePath, targetWidth, targetHeight, ctx.getResources(), R.drawable.default_header);
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {
@@ -147,18 +216,41 @@ class UserProfile implements Serializable {
 
         UserProfile otherUP = (UserProfile) other;
 
-        String thisImagePath = this.imagePath;
-        String otherImagePath = otherUP.imagePath;
-
-        return this.getEmail().equals(otherUP.getEmail()) &&
-                this.getUsername().equals(otherUP.getUsername()) &&
-                this.getLocation().equals(otherUP.getLocation()) &&
-                this.getBiography().equals(otherUP.getBiography()) &&
+        return Utilities.equals(this.getEmail(), otherUP.getEmail()) &&
+                Utilities.equals(this.getUsername(), otherUP.getUsername()) &&
+                Utilities.equals(this.getLocation(), otherUP.getLocation()) &&
+                Utilities.equals(this.getBiography(), otherUP.getBiography()) &&
+                Utilities.equals(this.getImagePath(), otherUP.getImagePath()) &&
                 Float.compare(this.getRating(), otherUP.getRating()) == 0 &&
                 this.getLentBooks() == otherUP.getLentBooks() &&
                 this.getBorrowedBooks() == otherUP.getBorrowedBooks() &&
-                this.getToBeReturnedBooks() == otherUP.getToBeReturnedBooks() &&
-                (thisImagePath == null && otherImagePath == null ||
-                        thisImagePath != null && thisImagePath.equals(otherImagePath));
+                this.getToBeReturnedBooks() == otherUP.getToBeReturnedBooks();
+    }
+
+    Task<Void> saveToFirebase() {
+        this.trimFields();
+
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        assert currentUser != null;
+
+        return FirebaseDatabase.getInstance().getReference()
+                .child(FIREBASE_USERS_KEY)
+                .child(currentUser.getUid())
+                .child(FIREBASE_PROFILE_KEY)
+                .setValue(this);
+    }
+
+    void saveToFirebase(@NonNull OnSuccessListener<? super Void> onSuccess, @NonNull OnFailureListener onFailure) {
+        saveToFirebase()
+                .addOnSuccessListener(onSuccess)
+                .addOnFailureListener(onFailure);
+    }
+
+    interface OnDataLoadSuccess {
+        void apply(DataSnapshot dataSnapshot);
+    }
+
+    interface OnDataLoadFailure {
+        void apply(DatabaseError databaseError);
     }
 }

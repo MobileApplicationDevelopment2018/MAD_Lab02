@@ -12,14 +12,12 @@
     <string name="borrowed_books">Libri ricevuti</string>
     <string name="to_be_returned">Da restituire</string>
 
-    <string name="hint_email">Email</string>
     <string name="hint_username">Username</string>
     <string name="hint_biography">Descrizione</string>
     <string name="hint_location">Città</string>
 
-    <string name="default_email">email@default.com</string>
     <string name="default_username">NoFAndroid</string>
-    <string name="default_city">Torino</string>
+    <string name="default_city">Città Ignota</string>
     <string name="default_biography">Nessuna biografia inserita</string>
 
     <string name="camera_option">Acquisisci un\'immagine dalla fotocamera</string>

@@ -73,8 +73,7 @@
                             android:text="@string/default_username"
                             android:textAlignment="center"
                             android:textColor="@color/colorTextAccent"
-                            android:textSize="@dimen/material_text_headline"
-                            android:textStyle="bold" />
+                            android:textAppearance="@style/TextAppearance.AppCompat.Headline" />
 
                         <TextView
                             android:id="@+id/sp_location"
@@ -84,7 +83,7 @@
                             android:text="@string/default_city"
                             android:textAlignment="center"
                             android:textColor="@color/colorText"
-                            android:textSize="@dimen/material_text_subhead" />
+                            android:textAppearance="@style/TextAppearance.AppCompat.Subhead" />
                     </LinearLayout>
 
                     <LinearLayout
@@ -160,8 +159,7 @@
                             android:text="@string/number_zero"
                             android:textAlignment="center"
                             android:textColor="@color/colorTextAccent"
-                            android:textSize="@dimen/material_text_title"
-                            android:textStyle="bold" />
+                            android:textAppearance="@style/TextAppearance.AppCompat.Title" />
 
                         <TextView
                             android:id="@+id/sp_lent_books_text"
@@ -170,7 +168,7 @@
                             android:text="@string/lent_books"
                             android:textAlignment="center"
                             android:textColor="@color/colorText"
-                            android:textSize="@dimen/material_text_caption" />
+                            android:textAppearance="@style/TextAppearance.AppCompat.Caption" />
 
                     </LinearLayout>
 
@@ -192,8 +190,7 @@
                             android:text="@string/number_zero"
                             android:textAlignment="center"
                             android:textColor="@color/colorTextAccent"
-                            android:textSize="@dimen/material_text_title"
-                            android:textStyle="bold" />
+                            android:textAppearance="@style/TextAppearance.AppCompat.Title" />
 
                         <TextView
                             android:id="@+id/sp_borrowed_books_text"
@@ -202,7 +199,7 @@
                             android:text="@string/borrowed_books"
                             android:textAlignment="center"
                             android:textColor="@color/colorText"
-                            android:textSize="@dimen/material_text_caption" />
+                            android:textAppearance="@style/TextAppearance.AppCompat.Caption" />
 
                     </LinearLayout>
 
@@ -224,8 +221,7 @@
                             android:text="@string/number_zero"
                             android:textAlignment="center"
                             android:textColor="@color/colorTextAccent"
-                            android:textSize="@dimen/material_text_title"
-                            android:textStyle="bold" />
+                            android:textAppearance="@style/TextAppearance.AppCompat.Title" />
 
                         <TextView
                             android:id="@+id/sp_to_be_returned_text"
@@ -234,7 +230,7 @@
                             android:text="@string/to_be_returned"
                             android:textAlignment="center"
                             android:textColor="@color/colorText"
-                            android:textSize="@dimen/material_text_caption" />
+                            android:textAppearance="@style/TextAppearance.AppCompat.Caption" />
                     </LinearLayout>
                 </LinearLayout>
 
@@ -251,7 +247,7 @@
                     android:text="@string/default_biography"
                     android:textAlignment="center"
                     android:textColor="@color/colorText"
-                    android:textSize="@dimen/material_text_body1" />
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
 
             </LinearLayout>
 
