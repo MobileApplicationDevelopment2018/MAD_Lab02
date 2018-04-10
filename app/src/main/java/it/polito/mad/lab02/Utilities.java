@@ -51,6 +51,22 @@ class Utilities {
         return true;
     }
 
+    static String trimString(String string) {
+        return trimString(string, 0);
+    }
+
+    static String trimString(String string, int maxLength) {
+        if (string == null) {
+            return null;
+        }
+
+        string = string.trim().replaceAll("\\p{Zs}+", " ");
+        if (maxLength > 0 && string.length() > maxLength) {
+            string = string.substring(0, maxLength);
+        }
+        return string;
+    }
+
     static boolean equals(Object a, Object b) {
         return a == b || (a != null) && (b != null) && a.equals(b);
     }

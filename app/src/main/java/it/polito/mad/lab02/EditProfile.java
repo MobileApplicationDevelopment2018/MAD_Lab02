@@ -106,7 +106,7 @@ public class EditProfile extends AppCompatActivity {
             reset.setOnClickListener(v3 -> {
                 this.imageChanged = false;
                 currentProfile.update(null);
-                imageView.setImageBitmap(currentProfile.getImageBitmapOrDefault(this, imageView.getWidth(), imageView.getHeight()));
+                imageView.setImageBitmap(currentProfile.getImageBitmapOrDefault(this.getResources(), imageView.getWidth(), imageView.getHeight()));
                 bottomSheetDialog.dismiss();
             });
 
@@ -219,7 +219,7 @@ public class EditProfile extends AppCompatActivity {
 
                     if (imageFileCamera.exists()) {
                         currentProfile.update(imageFileCamera.getAbsolutePath());
-                        imageView.setImageBitmap(currentProfile.getImageBitmapOrDefault(this, imageView.getWidth(), imageView.getHeight()));
+                        imageView.setImageBitmap(currentProfile.getImageBitmapOrDefault(this.getResources(), imageView.getWidth(), imageView.getHeight()));
                         this.imageChanged = true;
                     }
                     break;
@@ -236,7 +236,7 @@ public class EditProfile extends AppCompatActivity {
                         }
 
                         currentProfile.update(imageFileGallery.getAbsolutePath());
-                        imageView.setImageBitmap(currentProfile.getImageBitmapOrDefault(this, imageView.getWidth(), imageView.getHeight()));
+                        imageView.setImageBitmap(currentProfile.getImageBitmapOrDefault(this.getResources(), imageView.getWidth(), imageView.getHeight()));
 
                         this.imageChanged = true;
                     }
@@ -274,7 +274,7 @@ public class EditProfile extends AppCompatActivity {
         biography.setText(profile.getBiography());
 
         imageView.post(() ->
-                imageView.setImageBitmap(profile.getImageBitmapOrDefault(this, imageView.getWidth(), imageView.getHeight()))
+                imageView.setImageBitmap(profile.getImageBitmapOrDefault(this.getResources(), imageView.getWidth(), imageView.getHeight()))
         );
     }
 
@@ -310,7 +310,7 @@ public class EditProfile extends AppCompatActivity {
             ProgressDialog dialog = ProgressDialog.show(this, "",
                     "Saving your personal data. Please wait...", true);
 
-            currentProfile.saveToFirebase((t) -> {
+            currentProfile.saveToFirebase(this.getResources(), (t) -> {
                 Intent intent = new Intent(getApplicationContext(), ShowProfile.class);
                 intent.putExtra(UserProfile.PROFILE_INFO_KEY, currentProfile);
                 setResult(RESULT_OK, intent);

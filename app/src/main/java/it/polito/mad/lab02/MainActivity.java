@@ -233,11 +233,11 @@ public class MainActivity extends AppCompatActivity
                 getString(R.string.fui_progress_dialog_loading), true);
         UserProfile.loadFromFirebase(data -> {
             dialog.cancel();
-            localProfile = data.getValue(UserProfile.class);
 
-            if (localProfile == null) {
+            if (data == null) {
                 completeRegistration();
             } else {
+                localProfile = new UserProfile(data, this.getResources());
                 updateNavigationView();
                 showToast(getString(R.string.sign_in_welcome_back) + " " + localProfile.getUsername());
             }
@@ -252,8 +252,8 @@ public class MainActivity extends AppCompatActivity
     private void completeRegistration() {
 
         assert mAuth.getCurrentUser() != null;
-        localProfile = new UserProfile(this, mAuth.getCurrentUser());
-        localProfile.saveToFirebase();
+        localProfile = new UserProfile(mAuth.getCurrentUser(), this.getResources());
+        localProfile.saveToFirebase(this.getResources());
 
         String message = getString(R.string.sign_in_welcome) + " " + localProfile.getUsername();
         Snackbar.make(findViewById(R.id.main_coordinator_layout), message, Snackbar.LENGTH_LONG)

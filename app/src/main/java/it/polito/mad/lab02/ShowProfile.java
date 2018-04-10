@@ -142,7 +142,7 @@ public class ShowProfile extends AppCompatActivity {
         biography.setText(profile.getBiography());
 
         image.post(() ->
-                image.setImageBitmap(profile.getImageBitmapOrDefault(this, image.getWidth(), image.getHeight()))
+                image.setImageBitmap(profile.getImageBitmapOrDefault(this.getResources(), image.getWidth(), image.getHeight()))
         );
 
         rating.setRating(profile.getRating());

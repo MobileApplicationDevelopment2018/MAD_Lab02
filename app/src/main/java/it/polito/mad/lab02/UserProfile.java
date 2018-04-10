@@ -1,6 +1,6 @@
 package it.polito.mad.lab02;
 
-import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.support.annotation.NonNull;
 import android.util.Patterns;
@@ -24,73 +24,44 @@ class UserProfile implements Serializable {
     static final String PROFILE_INFO_KEY = "profile_info_key";
 
     private static final String FIREBASE_USERS_KEY = "users";
+    private static final String FIREBASE_DATA_KEY = "data";
     private static final String FIREBASE_PROFILE_KEY = "profile";
 
-    private String email;
-    private String username;
-    private String location;
-    private String biography;
-    private String imagePath;
-
-    private float rating;
-    private int lentBooks;
-    private int borrowedBooks;
-    private int toBeReturnedBooks;
+    private final Data data;
 
     UserProfile() {
-        this.email = null;
-        this.username = null;
-        this.location = null;
-        this.biography = null;
-        this.imagePath = null;
+        this.data = new Data();
+    }
 
-        this.rating = 0;
-        this.lentBooks = 0;
-        this.borrowedBooks = 0;
-        this.toBeReturnedBooks = 0;
+    UserProfile(@NonNull Data data, @NonNull Resources resources) {
+        this.data = data;
+        trimFields(resources);
     }
 
     UserProfile(@NonNull UserProfile other) {
-        this.email = other.getEmail();
-        this.username = other.getUsername();
-        this.location = other.getLocation();
-        this.biography = other.getBiography();
-
-        this.imagePath = other.imagePath;
-
-        this.rating = other.getRating();
-        this.lentBooks = other.getLentBooks();
-        this.borrowedBooks = other.getBorrowedBooks();
-        this.toBeReturnedBooks = other.getToBeReturnedBooks();
+        this.data = new Data(other.data);
     }
 
-    UserProfile(@NonNull Context context, FirebaseUser user) {
-        super();
+    UserProfile(FirebaseUser user, @NonNull Resources resources) {
+        this.data = new Data();
 
         if (user != null) {
-            this.email = user.getEmail();
-            this.username = user.getDisplayName();
+            this.data.profile.email = user.getEmail();
+            this.data.profile.username = user.getDisplayName();
 
             for (UserInfo profile : user.getProviderData()) {
-                if (this.username == null && profile.getDisplayName() != null) {
-                    this.username = profile.getDisplayName();
+                if (this.data.profile.username == null && profile.getDisplayName() != null) {
+                    this.data.profile.username = profile.getDisplayName();
                 }
             }
 
-            if (this.username == null) {
-                this.username = getUsernameFromEmail(this.email);
+            if (this.data.profile.username == null) {
+                this.data.profile.username = getUsernameFromEmail(this.data.profile.email);
 
             }
 
-            this.username = this.username
-                    .trim().replaceAll("\\p{Zs}+", " ");
-
-            int maxLength = context.getResources().getInteger(R.integer.max_length_username);
-            if (this.username.length() > maxLength) {
-                this.username = this.username.substring(0, maxLength);
-            }
-
-            this.location = context.getString(R.string.default_city);
+            this.data.profile.username = Utilities.trimString(this.data.profile.username, resources.getInteger(R.integer.max_length_username));
+            this.data.profile.location = resources.getString(R.string.default_city);
         }
     }
 
@@ -102,11 +73,11 @@ class UserProfile implements Serializable {
         FirebaseDatabase.getInstance().getReference()
                 .child(FIREBASE_USERS_KEY)
                 .child(currentUser.getUid())
-                .child(FIREBASE_PROFILE_KEY)
+                .child(FIREBASE_DATA_KEY)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-                        onSuccess.apply(dataSnapshot);
+                        onSuccess.apply(dataSnapshot.getValue(UserProfile.Data.class));
                     }
 
                     @Override
@@ -121,87 +92,77 @@ class UserProfile implements Serializable {
     }
 
     void update(String imagePath) {
-        this.imagePath = imagePath;
+        this.data.profile.imagePath = imagePath;
     }
 
     void update(@NonNull String username, @NonNull String location, @NonNull String biography) {
-        this.username = username;
-        this.location = location;
-        this.biography = biography;
+        this.data.profile.username = username;
+        this.data.profile.location = location;
+        this.data.profile.biography = biography;
     }
 
-    private void trimFields() {
-        this.username = this.username.trim().replaceAll("\\p{Zs}+", " ");
-        this.location = this.location.trim().replaceAll("\\p{Zs}+", " ");
-
-        if (this.biography != null) {
-            this.biography = this.biography.trim().replaceAll("\\p{Zs}+", " ");
-        }
+    private void trimFields(@NonNull Resources resources) {
+        this.data.profile.username = Utilities.trimString(this.data.profile.username, resources.getInteger(R.integer.max_length_username));
+        this.data.profile.location = Utilities.trimString(this.data.profile.location, resources.getInteger(R.integer.max_length_location));
+        this.data.profile.biography = Utilities.trimString(this.data.profile.biography, resources.getInteger(R.integer.max_length_biography));
     }
 
     String getUsername() {
-        return this.username;
+        return this.data.profile.username;
     }
 
     String getLocation() {
-        return this.location;
+        return this.data.profile.location;
     }
 
     String getBiography() {
-        return this.biography;
+        return this.data.profile.biography;
     }
 
     String getImagePath() {
-        return this.imagePath;
+        return this.data.profile.imagePath;
     }
 
     float getRating() {
-        return this.rating;
+        return this.data.statistics.rating;
     }
 
     int getLentBooks() {
-        return this.lentBooks;
+        return this.data.statistics.lentBooks;
     }
 
     int getBorrowedBooks() {
-        return this.borrowedBooks;
+        return this.data.statistics.borrowedBooks;
     }
 
     int getToBeReturnedBooks() {
-        return this.toBeReturnedBooks;
+        return this.data.statistics.toBeReturnedBooks;
     }
 
-    /* BEGIN GETTERS */
     String getEmail() {
-        return this.email;
+        return this.data.profile.email;
     }
 
-    @Exclude
     boolean isAnonymous() {
-        return this.email == null;
+        return this.data.profile.email == null;
     }
-    /* END GETTERS */
 
-    @Exclude
     boolean isLocal() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        assert user != null;
-        assert this.email != null;
+        return user == null || isAnonymous() || this.data.profile.email.equals(user.getEmail());
 
-        return this.email.equals(user.getEmail());
     }
 
-    @Exclude
     boolean isValid() {
-        return Patterns.EMAIL_ADDRESS.matcher(email).matches() &&
-                !Utilities.isNullOrWhitespace(username) &&
-                !Utilities.isNullOrWhitespace(location) &&
-                Utilities.isValidLocation(location);
+        return Patterns.EMAIL_ADDRESS.matcher(this.data.profile.email).matches() &&
+                !Utilities.isNullOrWhitespace(this.data.profile.username) &&
+                !Utilities.isNullOrWhitespace(this.data.profile.location) &&
+                Utilities.isValidLocation(this.data.profile.location);
     }
 
     @Exclude
-    Bitmap getImageBitmapOrDefault(@NonNull Context ctx, int targetWidth, int targetHeight) {
-        return Utilities.loadImage(this.imagePath, targetWidth, targetHeight, ctx.getResources(), R.drawable.default_header);
+    Bitmap getImageBitmapOrDefault(@NonNull Resources resources, int targetWidth, int targetHeight) {
+        return Utilities.loadImage(this.data.profile.imagePath, targetWidth, targetHeight, resources, R.drawable.default_header);
     }
 
     @Override
@@ -227,8 +188,8 @@ class UserProfile implements Serializable {
                 this.getToBeReturnedBooks() == otherUP.getToBeReturnedBooks();
     }
 
-    Task<Void> saveToFirebase() {
-        this.trimFields();
+    Task<Void> saveToFirebase(@NonNull Resources resources) {
+        this.trimFields(resources);
 
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         assert currentUser != null;
@@ -236,21 +197,85 @@ class UserProfile implements Serializable {
         return FirebaseDatabase.getInstance().getReference()
                 .child(FIREBASE_USERS_KEY)
                 .child(currentUser.getUid())
+                .child(FIREBASE_DATA_KEY)
                 .child(FIREBASE_PROFILE_KEY)
-                .setValue(this);
+                .setValue(this.data.profile);
     }
 
-    void saveToFirebase(@NonNull OnSuccessListener<? super Void> onSuccess, @NonNull OnFailureListener onFailure) {
-        saveToFirebase()
+    void saveToFirebase(@NonNull Resources resources, @NonNull OnSuccessListener<? super Void> onSuccess, @NonNull OnFailureListener onFailure) {
+        saveToFirebase(resources)
                 .addOnSuccessListener(onSuccess)
                 .addOnFailureListener(onFailure);
     }
 
     interface OnDataLoadSuccess {
-        void apply(DataSnapshot dataSnapshot);
+        void apply(UserProfile.Data data);
     }
 
     interface OnDataLoadFailure {
         void apply(DatabaseError databaseError);
+    }
+
+    /* Fields need to be public to enable Firebase to access them */
+    @SuppressWarnings("WeakerAccess")
+    static class Data implements Serializable {
+
+        public Profile profile;
+        public Statistics statistics;
+
+        public Data() {
+            this.profile = new Profile();
+            this.statistics = new Statistics();
+        }
+
+        public Data(@NonNull Data other) {
+            this.profile = new Profile(other.profile);
+            this.statistics = new Statistics(other.statistics);
+        }
+
+        private static class Profile implements Serializable {
+            public String email;
+            public String username;
+            public String location;
+            public String biography;
+            public String imagePath;
+
+            public Profile() {
+                this.email = null;
+                this.username = null;
+                this.location = null;
+                this.biography = null;
+                this.imagePath = null;
+            }
+
+            public Profile(@NonNull Profile other) {
+                this.email = other.email;
+                this.username = other.username;
+                this.location = other.location;
+                this.biography = other.biography;
+                this.imagePath = other.imagePath;
+            }
+        }
+
+        private static class Statistics implements Serializable {
+            public float rating;
+            public int lentBooks;
+            public int borrowedBooks;
+            public int toBeReturnedBooks;
+
+            public Statistics() {
+                this.rating = 0;
+                this.lentBooks = 0;
+                this.borrowedBooks = 0;
+                this.toBeReturnedBooks = 0;
+            }
+
+            public Statistics(@NonNull Statistics other) {
+                this.rating = other.rating;
+                this.lentBooks = other.lentBooks;
+                this.borrowedBooks = other.borrowedBooks;
+                this.toBeReturnedBooks = other.toBeReturnedBooks;
+            }
+        }
     }
 }
