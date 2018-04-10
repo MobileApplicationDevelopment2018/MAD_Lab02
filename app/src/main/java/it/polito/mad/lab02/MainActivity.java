@@ -2,11 +2,15 @@ package it.polito.mad.lab02;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.StringRes;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -26,7 +30,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import java.util.Arrays;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener, AddBookFragment.OnFragmentInteractionListener {
 
     private static final int RC_SIGN_IN = 1;
     private static final int RC_COMPLETE_REGISTRATION = 2;
@@ -122,7 +126,13 @@ public class MainActivity extends AppCompatActivity
                 break;
 
             case R.id.nav_add_book:
-                Toast.makeText(this, "Add book clicked", Toast.LENGTH_LONG).show();
+                Fragment addBook = AddBookFragment.newInstance();
+
+                FragmentManager fragmentManager = getSupportFragmentManager();
+                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+                fragmentTransaction.replace(R.id.drawer_layout, addBook);
+                fragmentTransaction.commit();
                 break;
 
             case R.id.nav_profile:
@@ -264,5 +274,10 @@ public class MainActivity extends AppCompatActivity
                 }).show();
 
         updateNavigationView();
+    }
+
+    @Override
+    public void onFragmentInteraction(Uri uri) {
+
     }
 }
