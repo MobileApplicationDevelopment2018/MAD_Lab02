@@ -14,6 +14,9 @@ import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
+
 import java.util.Locale;
 
 public class ShowProfile extends AppCompatActivity {
@@ -141,9 +144,13 @@ public class ShowProfile extends AppCompatActivity {
         location.setText(profile.getLocation());
         biography.setText(profile.getBiography());
 
-        image.post(() ->
-                image.setImageBitmap(profile.getImageBitmapOrDefault(this.getResources(), image.getWidth(), image.getHeight()))
-        );
+        RequestOptions options = new RequestOptions()
+                .placeholder(R.drawable.default_header);
+
+        Glide.with(this)
+                .load(profile.getImagePath())
+                .apply(options)
+                .into(image);
 
         rating.setRating(profile.getRating());
 

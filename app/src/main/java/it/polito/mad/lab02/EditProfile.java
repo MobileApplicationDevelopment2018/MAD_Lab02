@@ -25,6 +25,9 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -41,7 +44,6 @@ public class EditProfile extends AppCompatActivity {
     private static final int PERMISSIONS_REQUEST_EXTERNAL_STORAGE = 4;
 
     private EditText username, location, biography;
-    private ImageView imageView;
     private BottomSheetDialog bottomSheetDialog;
     private boolean imageChanged;
     private UserProfile originalProfile, currentProfile;
@@ -54,7 +56,6 @@ public class EditProfile extends AppCompatActivity {
         username = findViewById(R.id.ep_input_username);
         location = findViewById(R.id.ep_input_location);
         biography = findViewById(R.id.ep_input_biography);
-        imageView = findViewById(R.id.ep_profile_picture);
 
         // Initialize the Profile instances
         if (savedInstanceState != null) {
@@ -106,7 +107,7 @@ public class EditProfile extends AppCompatActivity {
             reset.setOnClickListener(v3 -> {
                 this.imageChanged = false;
                 currentProfile.update(null);
-                imageView.setImageBitmap(currentProfile.getImageBitmapOrDefault(this.getResources(), imageView.getWidth(), imageView.getHeight()));
+                loadImageProfile(currentProfile.getImagePath());
                 bottomSheetDialog.dismiss();
             });
 
@@ -219,7 +220,7 @@ public class EditProfile extends AppCompatActivity {
 
                     if (imageFileCamera.exists()) {
                         currentProfile.update(imageFileCamera.getAbsolutePath());
-                        imageView.setImageBitmap(currentProfile.getImageBitmapOrDefault(this.getResources(), imageView.getWidth(), imageView.getHeight()));
+                        loadImageProfile(currentProfile.getImagePath());
                         this.imageChanged = true;
                     }
                     break;
@@ -236,7 +237,7 @@ public class EditProfile extends AppCompatActivity {
                         }
 
                         currentProfile.update(imageFileGallery.getAbsolutePath());
-                        imageView.setImageBitmap(currentProfile.getImageBitmapOrDefault(this.getResources(), imageView.getWidth(), imageView.getHeight()));
+                        loadImageProfile(currentProfile.getImagePath());
 
                         this.imageChanged = true;
                     }
@@ -273,9 +274,7 @@ public class EditProfile extends AppCompatActivity {
         location.setText(profile.getLocation());
         biography.setText(profile.getBiography());
 
-        imageView.post(() ->
-                imageView.setImageBitmap(profile.getImageBitmapOrDefault(this.getResources(), imageView.getWidth(), imageView.getHeight()))
-        );
+        loadImageProfile(profile.getImagePath());
     }
 
     private void updateProfileInfo(UserProfile profile) {
@@ -333,5 +332,16 @@ public class EditProfile extends AppCompatActivity {
             tmpImageFile.deleteOnExit();
         }
         finish();
+    }
+
+    private void loadImageProfile(String uri) {
+        ImageView image = findViewById(R.id.ep_profile_picture);
+
+        Glide.with(this)
+                .load(uri)
+                .apply(new RequestOptions()
+                        .centerCrop()
+                        .placeholder(R.drawable.default_header))
+                .into(image);
     }
 }
