@@ -14,6 +14,8 @@ import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.signature.ObjectKey;
+
 import java.util.Locale;
 
 import it.polito.mad.lab02.data.UserProfile;
@@ -149,6 +151,7 @@ public class ShowProfile extends AppCompatActivity {
                 .load(profile.getImageReference())
                 .centerCrop()
                 .placeholder(R.drawable.default_header)
+                .signature(new ObjectKey(profile.getProfilePictureLastModified()))
                 .into(imageView);
 
         rating.setRating(profile.getRating());

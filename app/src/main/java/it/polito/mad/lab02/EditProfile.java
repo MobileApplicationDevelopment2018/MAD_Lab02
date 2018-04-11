@@ -25,6 +25,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.bumptech.glide.signature.ObjectKey;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 
@@ -293,16 +294,6 @@ public class EditProfile extends AppCompatActivity {
             return;
         }
 
-        // Save the image permanently
-        /*if (currentProfile.imageUpdated(originalProfile)) {
-
-            currentProfile.updateImageOnFirebase(
-                    t -> Toast.makeText(this, "Image uploaded successfully", Toast.LENGTH_LONG).show(),
-                    t -> Toast.makeText(this, "Image removed successfully", Toast.LENGTH_LONG).show(),
-                    t -> Toast.makeText(this, "Something went wrong", Toast.LENGTH_LONG).show()
-            );
-        }*/
-
         if (originalProfile == null || !originalProfile.equals(currentProfile)) {
 
             ProgressDialog dialog = ProgressDialog.show(this, "",
@@ -351,6 +342,7 @@ public class EditProfile extends AppCompatActivity {
                 .load(profile.getImageReference())
                 .centerCrop()
                 .placeholder(R.drawable.default_header)
+                .signature(new ObjectKey(profile.getProfilePictureLastModified()))
                 .into(imageView);
     }
 }

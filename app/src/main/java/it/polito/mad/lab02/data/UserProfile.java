@@ -155,6 +155,10 @@ public class UserProfile implements Serializable {
         return this.data.profile.email;
     }
 
+    public long getProfilePictureLastModified() {
+        return this.data.profile.profilePictureLastModified;
+    }
+
     public boolean isAnonymous() {
         return this.data.profile.email == null;
     }
@@ -254,6 +258,7 @@ public class UserProfile implements Serializable {
 
     public void setLocalImagePath(String path) {
         this.data.profile.hasProfilePicture = path != null;
+        this.data.profile.profilePictureLastModified = System.currentTimeMillis();
         localImagePath = path;
     }
 
@@ -296,6 +301,7 @@ public class UserProfile implements Serializable {
             public String location;
             public String biography;
             public boolean hasProfilePicture;
+            public long profilePictureLastModified;
 
             public Profile() {
                 this.email = null;
@@ -303,6 +309,7 @@ public class UserProfile implements Serializable {
                 this.location = null;
                 this.biography = null;
                 this.hasProfilePicture = false;
+                this.profilePictureLastModified = 0;
             }
 
             public Profile(@NonNull Profile other) {
@@ -311,6 +318,7 @@ public class UserProfile implements Serializable {
                 this.location = other.location;
                 this.biography = other.biography;
                 this.hasProfilePicture = other.hasProfilePicture;
+                this.profilePictureLastModified = other.profilePictureLastModified;
             }
         }
 
