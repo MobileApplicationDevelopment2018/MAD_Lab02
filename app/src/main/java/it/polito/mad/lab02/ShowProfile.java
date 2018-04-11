@@ -14,10 +14,10 @@ import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.RequestOptions;
-
 import java.util.Locale;
+
+import it.polito.mad.lab02.data.UserProfile;
+import it.polito.mad.lab02.utils.GlideApp;
 
 public class ShowProfile extends AppCompatActivity {
 
@@ -133,7 +133,7 @@ public class ShowProfile extends AppCompatActivity {
         TextView username = findViewById(R.id.sp_username);
         TextView location = findViewById(R.id.sp_location);
         TextView biography = findViewById(R.id.sp_description);
-        ImageView image = findViewById(R.id.sp_profile_picture);
+        ImageView imageView = findViewById(R.id.sp_profile_picture);
 
         RatingBar rating = findViewById(R.id.sp_rating_bar);
         TextView lentBooks = findViewById(R.id.sp_lent_books_number);
@@ -144,13 +144,12 @@ public class ShowProfile extends AppCompatActivity {
         location.setText(profile.getLocation());
         biography.setText(profile.getBiography());
 
-        RequestOptions options = new RequestOptions()
-                .placeholder(R.drawable.default_header);
 
-        Glide.with(this)
-                .load(profile.getImagePath())
-                .apply(options)
-                .into(image);
+        GlideApp.with(this)
+                .load(profile.getImageReference())
+                .centerCrop()
+                .placeholder(R.drawable.default_header)
+                .into(imageView);
 
         rating.setRating(profile.getRating());
 

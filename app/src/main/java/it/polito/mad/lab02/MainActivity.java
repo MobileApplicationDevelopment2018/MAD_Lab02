@@ -29,6 +29,9 @@ import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.Arrays;
 
+import it.polito.mad.lab02.data.UserProfile;
+import it.polito.mad.lab02.utils.Utilities;
+
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, AddBookFragment.OnFragmentInteractionListener {
 

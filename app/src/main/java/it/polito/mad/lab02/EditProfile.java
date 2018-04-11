@@ -25,19 +25,24 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.RequestOptions;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import it.polito.mad.lab02.data.UserProfile;
+import it.polito.mad.lab02.utils.GlideApp;
+import it.polito.mad.lab02.utils.TextWatcherUtilities;
+import it.polito.mad.lab02.utils.Utilities;
 
 public class EditProfile extends AppCompatActivity {
 
     private static final String ORIGINAL_PROFILE_KEY = "original_profile";
     private static final String CURRENT_PROFILE_KEY = "current_profile";
-    private static final String IMAGE_CHANGED_KEY = "image_changed";
-    private static final String IMAGE_PATH = "profile_pic";
-    private static final String IMAGE_PATH_TMP = "profile_pic_tmp";
+    private static final String IMAGE_PATH_TMP = "profile_picture_tmp";
 
     private static final int CAMERA = 2;
     private static final int GALLERY = 3;
@@ -45,7 +50,6 @@ public class EditProfile extends AppCompatActivity {
 
     private EditText username, location, biography;
     private BottomSheetDialog bottomSheetDialog;
-    private boolean imageChanged;
     private UserProfile originalProfile, currentProfile;
 
     @Override
@@ -62,12 +66,10 @@ public class EditProfile extends AppCompatActivity {
             // If they was saved, load them
             originalProfile = (UserProfile) savedInstanceState.getSerializable(ORIGINAL_PROFILE_KEY);
             currentProfile = (UserProfile) savedInstanceState.getSerializable(CURRENT_PROFILE_KEY);
-            imageChanged = savedInstanceState.getBoolean(IMAGE_CHANGED_KEY, false);
         } else {
             // Otherwise, obtain them through the intent
             originalProfile = (UserProfile) this.getIntent().getSerializableExtra(UserProfile.PROFILE_INFO_KEY);
             currentProfile = new UserProfile(originalProfile);
-            imageChanged = false;
         }
 
         // Set the toolbar
@@ -105,9 +107,8 @@ public class EditProfile extends AppCompatActivity {
             });
 
             reset.setOnClickListener(v3 -> {
-                this.imageChanged = false;
-                currentProfile.update(null);
-                loadImageProfile(currentProfile.getImagePath());
+                currentProfile.resetProfilePicture();
+                loadImageProfile(currentProfile);
                 bottomSheetDialog.dismiss();
             });
 
@@ -115,11 +116,11 @@ public class EditProfile extends AppCompatActivity {
         });
 
         username.addTextChangedListener(
-                new Utilities.GenericTextWatcher(username, getString(R.string.invalid_username),
+                new TextWatcherUtilities.GenericTextWatcher(username, getString(R.string.invalid_username),
                         string -> !Utilities.isNullOrWhitespace(string)));
 
         location.addTextChangedListener(
-                new Utilities.GenericTextWatcherEmptyOrInvalid(location,
+                new TextWatcherUtilities.GenericTextWatcherEmptyOrInvalid(location,
                         getString(R.string.invalid_location_empty),
                         getString(R.string.invalid_location_wrong),
                         string -> !Utilities.isNullOrWhitespace(string),
@@ -167,14 +168,14 @@ public class EditProfile extends AppCompatActivity {
     public void onBackPressed() {
 
         updateProfileInfo(currentProfile);
-        if (!currentProfile.equals(originalProfile) || this.imageChanged) {
+        if (!currentProfile.equals(originalProfile)) {
             new AlertDialog.Builder(this)
                     .setMessage(getString(R.string.discard_changes))
-                    .setPositiveButton(getString(android.R.string.yes), (dialog, which) -> cleanupAndFinish())
+                    .setPositiveButton(getString(android.R.string.yes), (dialog, which) -> finish())
                     .setNegativeButton(getString(android.R.string.no), null)
                     .show();
         } else {
-            cleanupAndFinish();
+            finish();
         }
     }
 
@@ -185,7 +186,6 @@ public class EditProfile extends AppCompatActivity {
         updateProfileInfo(currentProfile);
         outState.putSerializable(ORIGINAL_PROFILE_KEY, originalProfile);
         outState.putSerializable(CURRENT_PROFILE_KEY, currentProfile);
-        outState.putBoolean(IMAGE_CHANGED_KEY, imageChanged);
     }
 
     private void galleryLoadPicture() {
@@ -219,9 +219,8 @@ public class EditProfile extends AppCompatActivity {
                     File imageFileCamera = new File(this.getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES), IMAGE_PATH_TMP);
 
                     if (imageFileCamera.exists()) {
-                        currentProfile.update(imageFileCamera.getAbsolutePath());
-                        loadImageProfile(currentProfile.getImagePath());
-                        this.imageChanged = true;
+                        currentProfile.setLocalImagePath(imageFileCamera.getAbsolutePath());
+                        loadImageProfile(currentProfile);
                     }
                     break;
 
@@ -236,10 +235,8 @@ public class EditProfile extends AppCompatActivity {
                             Utilities.showErrorMessage(this, R.string.failed_obtain_picture);
                         }
 
-                        currentProfile.update(imageFileGallery.getAbsolutePath());
-                        loadImageProfile(currentProfile.getImagePath());
-
-                        this.imageChanged = true;
+                        currentProfile.setLocalImagePath(imageFileGallery.getAbsolutePath());
+                        loadImageProfile(currentProfile);
                     }
                     break;
 
@@ -274,7 +271,7 @@ public class EditProfile extends AppCompatActivity {
         location.setText(profile.getLocation());
         biography.setText(profile.getBiography());
 
-        loadImageProfile(profile.getImagePath());
+        loadImageProfile(profile);
     }
 
     private void updateProfileInfo(UserProfile profile) {
@@ -288,37 +285,48 @@ public class EditProfile extends AppCompatActivity {
     private void commitChanges() {
         updateProfileInfo(currentProfile);
 
+        // TODO: remove on exit the tmp image
+        // TODO: handle better the two cases
+
         if (!currentProfile.isValid()) {
             Utilities.showErrorMessage(this, R.string.incorrect_values);
             return;
         }
 
         // Save the image permanently
-        if (this.imageChanged && currentProfile.getImagePath() != null) {
-            File sourceFile = new File(currentProfile.getImagePath());
-            File destinationFile = new File(this.getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES), IMAGE_PATH);
-            if (!sourceFile.renameTo(destinationFile)) {
-                Utilities.showErrorMessage(this, R.string.failed_obtain_picture);
-                return;
-            }
-            currentProfile.update(destinationFile.getAbsolutePath());
-        }
+        /*if (currentProfile.imageUpdated(originalProfile)) {
 
-        if (originalProfile == null || !originalProfile.equals(currentProfile) || this.imageChanged) {
+            currentProfile.updateImageOnFirebase(
+                    t -> Toast.makeText(this, "Image uploaded successfully", Toast.LENGTH_LONG).show(),
+                    t -> Toast.makeText(this, "Image removed successfully", Toast.LENGTH_LONG).show(),
+                    t -> Toast.makeText(this, "Something went wrong", Toast.LENGTH_LONG).show()
+            );
+        }*/
+
+        if (originalProfile == null || !originalProfile.equals(currentProfile)) {
 
             ProgressDialog dialog = ProgressDialog.show(this, "",
                     "Saving your personal data. Please wait...", true);
 
-            currentProfile.saveToFirebase(this.getResources(), (t) -> {
-                Intent intent = new Intent(getApplicationContext(), ShowProfile.class);
-                intent.putExtra(UserProfile.PROFILE_INFO_KEY, currentProfile);
-                setResult(RESULT_OK, intent);
-                dialog.cancel();
-                finish();
-            }, (t) -> {
-                dialog.cancel();
-                Utilities.showErrorMessage(this, R.string.failed_save_data);
-            });
+            List<Task<?>> tasks = new ArrayList<>();
+
+            tasks.add(currentProfile.saveToFirebase(this.getResources()));
+            if (currentProfile.imageUpdated(originalProfile)) {
+                tasks.add(currentProfile.updateImageOnFirebase());
+            }
+
+            Tasks.whenAllSuccess(tasks)
+                    .addOnSuccessListener(t -> {
+                        Intent intent = new Intent(getApplicationContext(), ShowProfile.class);
+                        intent.putExtra(UserProfile.PROFILE_INFO_KEY, currentProfile);
+                        setResult(RESULT_OK, intent);
+                        dialog.cancel();
+                        finish();
+                    })
+                    .addOnFailureListener(t -> {
+                        dialog.cancel();
+                        Utilities.showErrorMessage(this, R.string.failed_save_data);
+                    });
 
         } else {
             setResult(RESULT_CANCELED);
@@ -326,22 +334,23 @@ public class EditProfile extends AppCompatActivity {
         }
     }
 
-    private void cleanupAndFinish() {
-        File tmpImageFile = new File(this.getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES), IMAGE_PATH_TMP);
-        if (tmpImageFile.exists()) {
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if (isFinishing() && currentProfile.getLocalImagePath() != null) {
+            File tmpImageFile = new File(currentProfile.getLocalImagePath());
             tmpImageFile.deleteOnExit();
         }
-        finish();
     }
 
-    private void loadImageProfile(String uri) {
-        ImageView image = findViewById(R.id.ep_profile_picture);
+    private void loadImageProfile(UserProfile profile) {
+        ImageView imageView = findViewById(R.id.ep_profile_picture);
 
-        Glide.with(this)
-                .load(uri)
-                .apply(new RequestOptions()
-                        .centerCrop()
-                        .placeholder(R.drawable.default_header))
-                .into(image);
+        GlideApp.with(this)
+                .load(profile.getImageReference())
+                .centerCrop()
+                .placeholder(R.drawable.default_header)
+                .into(imageView);
     }
 }
