@@ -33,7 +33,7 @@ import it.polito.mad.lab02.data.UserProfile;
 import it.polito.mad.lab02.utils.Utilities;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, AddBookFragment.OnFragmentInteractionListener {
+        implements NavigationView.OnNavigationItemSelectedListener, AddBookFragment.OnFragmentInteractionListener, ExploreFragment.OnFragmentInteractionListener {
 
     private static final int RC_SIGN_IN = 1;
     private static final int RC_COMPLETE_REGISTRATION = 2;
@@ -41,6 +41,10 @@ public class MainActivity extends AppCompatActivity
 
     private FirebaseAuth mAuth;
     private UserProfile localProfile;
+
+
+    FragmentManager fragmentManager;
+    FragmentTransaction fragmentTransaction;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,6 +63,7 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
 
         // Profile already cached locally
         if (savedInstanceState != null) {
@@ -115,13 +120,23 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         // Handle navigation view item clicks here.
-        switch (item.getItemId()) {
+
+        int id = item.getItemId();
+
+        switch (id) {
 
             case R.id.nav_explore:
-                Toast.makeText(this, "Explore clicked", Toast.LENGTH_LONG).show();
+                Fragment explore = ExploreFragment.newInstance();
+
+                fragmentManager = getSupportFragmentManager();
+                fragmentTransaction = fragmentManager.beginTransaction();
+
+                fragmentTransaction.replace(R.id.content_frame, explore).addToBackStack(null);
+                fragmentTransaction.commit();
                 break;
 
             case R.id.nav_sign_in:
@@ -131,10 +146,10 @@ public class MainActivity extends AppCompatActivity
             case R.id.nav_add_book:
                 Fragment addBook = AddBookFragment.newInstance();
 
-                FragmentManager fragmentManager = getSupportFragmentManager();
-                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                fragmentManager = getSupportFragmentManager();
+                fragmentTransaction = fragmentManager.beginTransaction();
 
-                fragmentTransaction.replace(R.id.drawer_layout, addBook);
+                fragmentTransaction.replace(R.id.content_frame, addBook).addToBackStack(null);
                 fragmentTransaction.commit();
                 break;
 
