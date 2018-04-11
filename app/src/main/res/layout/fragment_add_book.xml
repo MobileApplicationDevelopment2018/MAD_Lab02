@@ -9,7 +9,10 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:layout_marginTop="16dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp">
 
         <ScrollView
             android:layout_width="match_parent"
@@ -20,36 +23,50 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <LinearLayout
+                <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:orientation="horizontal"
                     android:paddingTop="5dp">
 
                     <android.support.design.widget.TextInputLayout
                         android:id="@+id/ab_isbn"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="16dp"
-                        android:layout_marginStart="16dp"
                         app:counterMaxLength="13">
 
                         <EditText
                             android:id="@+id/ab_edit_isbn"
-                            android:layout_width="match_parent"
+                            android:layout_width="300dp"
                             android:layout_height="wrap_content"
+                            android:layout_gravity="left"
+                            android:paddingLeft="4dp"
                             android:hint="@string/hint_isbn"
                             android:inputType="textNoSuggestions"
-                            android:maxLength="@integer/max_length_username"
-                            android:nextFocusLeft="@id/ep_input_username"
-                            android:nextFocusUp="@id/ep_input_username" />
-
+                            android:maxLength="13" />
                     </android.support.design.widget.TextInputLayout>
-                </LinearLayout>
+
+                    <ImageView
+                        android:layout_width="44dp"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentLeft="true"
+                        android:layout_marginTop="6dp"
+                        android:layout_marginLeft="300dp"
+                        android:layout_centerVertical="true"
+                        android:contentDescription="@string/hint_username"
+                        android:src="@drawable/ic_photo_camera_white_24dp"
+                        android:tint="@color/colorPrimary" />
+
+                </RelativeLayout>
+                <!--View
+                    android:layout_width="match_parent"
+                    android:layout_height="2dp"
+                    android:layout_marginTop="16dp"
+                    android:background="@color/colorPrimary"/-->
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp">
                     <Button
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -69,8 +86,7 @@
                         android:id="@+id/ab_title"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="16dp"
-                        android:layout_marginStart="16dp"
+
                         app:counterMaxLength="13">
 
                         <EditText
@@ -96,8 +112,6 @@
                         android:id="@+id/ab_author"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="16dp"
-                        android:layout_marginStart="16dp"
                         app:counterMaxLength="13">
 
                         <EditText
@@ -123,8 +137,6 @@
                         android:id="@+id/ab_publisher"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="16dp"
-                        android:layout_marginStart="16dp"
                         app:counterMaxLength="13">
 
                         <EditText
@@ -150,8 +162,6 @@
                         android:id="@+id/ab_editionYear"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="16dp"
-                        android:layout_marginStart="16dp"
                         app:counterMaxLength="13">
 
                         <EditText
@@ -178,8 +188,6 @@
                         android:id="@+id/ab_condition"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="16dp"
-                        android:layout_marginStart="16dp"
                         app:counterMaxLength="13">
 
                         <EditText
