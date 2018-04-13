@@ -32,6 +32,7 @@
     <string name="incorrect_values">Some fields contain invalid data.\nPlease, check them</string>
     <string name="failed_obtain_picture">Something went wrong while obtaining the picture</string>
     <string name="success_save_data">Profile correctly updated</string>
+    <string name="saving_data">"Saving your personal data. Please wait…"</string>
     <string name="failed_save_data">Something went wrong while saving your data</string>
     <string name="failed_load_data">Something went wrong while retrieving your data.\nYou will be signed out</string>
 
@@ -57,7 +58,6 @@
     <string name="sign_out_succeeded">Sign Out succeeded</string>
     <string name="sign_out_failed">Sign Out failed</string>
     <string name="fui_name_hint">Username</string>
-
 
     <string name="complete_profile">Review and complete your information if you want</string>
 

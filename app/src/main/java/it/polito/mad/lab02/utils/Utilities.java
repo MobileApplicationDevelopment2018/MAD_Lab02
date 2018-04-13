@@ -1,6 +1,7 @@
 package it.polito.mad.lab02.utils;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
@@ -19,8 +20,8 @@ import static android.provider.MediaStore.Video;
 
 public class Utilities {
 
-    public static void showErrorMessage(Context context, @StringRes int message) {
-        new AlertDialog.Builder(context)
+    public static Dialog openErrorDialog(Context context, @StringRes int message) {
+        return new AlertDialog.Builder(context)
                 .setMessage(context.getString(message))
                 .setPositiveButton(context.getString(android.R.string.ok), null)
                 .show();

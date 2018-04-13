@@ -1,6 +1,7 @@
 package it.polito.mad.lab02;
 
 import android.Manifest;
+import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -19,7 +20,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -43,15 +43,17 @@ public class EditProfile extends AppCompatActivity {
 
     private static final String ORIGINAL_PROFILE_KEY = "original_profile";
     private static final String CURRENT_PROFILE_KEY = "current_profile";
+    private static final String CURRENT_DIALOG_ID_KEY = "current_dialog_id";
     private static final String IMAGE_PATH_TMP = "profile_picture_tmp";
 
     private static final int CAMERA = 2;
     private static final int GALLERY = 3;
     private static final int PERMISSIONS_REQUEST_EXTERNAL_STORAGE = 4;
+    private DialogID dialogId;
 
     private EditText username, location, biography;
-    private BottomSheetDialog bottomSheetDialog;
     private UserProfile originalProfile, currentProfile;
+    private Dialog dialogInstance;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,54 +69,32 @@ public class EditProfile extends AppCompatActivity {
             // If they was saved, load them
             originalProfile = (UserProfile) savedInstanceState.getSerializable(ORIGINAL_PROFILE_KEY);
             currentProfile = (UserProfile) savedInstanceState.getSerializable(CURRENT_PROFILE_KEY);
+            dialogId = (DialogID) savedInstanceState.getSerializable(CURRENT_DIALOG_ID_KEY);
         } else {
             // Otherwise, obtain them through the intent
             originalProfile = (UserProfile) this.getIntent().getSerializableExtra(UserProfile.PROFILE_INFO_KEY);
             currentProfile = new UserProfile(originalProfile);
         }
 
+        // Restore open dialog (if any)
+        if (dialogId == null) {
+            dialogId = DialogID.DIALOG_NONE;
+        }
+        this.openDialog(dialogId);
+
         // Set the toolbar
         final Toolbar toolbar = findViewById(R.id.ep_toolbar);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setDisplayShowHomeEnabled(true);
+        }
 
         // Fill the views with the data
         fillViews(currentProfile);
 
-        bottomSheetDialog = new BottomSheetDialog(this);
-        final View sheetView = this.getLayoutInflater().inflate(R.layout.bottom_sheet_picture_dialog, null);
-        bottomSheetDialog.setContentView(sheetView);
-
         final FloatingActionButton floatingActionButton = findViewById(R.id.ep_camera_button);
-        floatingActionButton.setOnClickListener(v -> {
-            LinearLayout camera = bottomSheetDialog.findViewById(R.id.bs_camera_option);
-            LinearLayout gallery = bottomSheetDialog.findViewById(R.id.bs_gallery_option);
-            LinearLayout reset = bottomSheetDialog.findViewById(R.id.bs_reset_option);
-
-            camera.setOnClickListener(v1 -> {
-                cameraTakePicture();
-                bottomSheetDialog.dismiss();
-            });
-
-            gallery.setOnClickListener(v2 -> {
-                if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_EXTERNAL_STORAGE);
-                } else {
-                    galleryLoadPicture();
-                }
-
-                bottomSheetDialog.dismiss();
-            });
-
-            reset.setOnClickListener(v3 -> {
-                currentProfile.resetProfilePicture();
-                loadImageProfile(currentProfile);
-                bottomSheetDialog.dismiss();
-            });
-
-            bottomSheetDialog.show();
-        });
+        floatingActionButton.setOnClickListener(v -> this.openDialog(DialogID.DIALOG_CHOOSE_PICTURE));
 
         username.addTextChangedListener(
                 new TextWatcherUtilities.GenericTextWatcher(username, getString(R.string.invalid_username),
@@ -133,11 +113,12 @@ public class EditProfile extends AppCompatActivity {
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-
-        if (bottomSheetDialog.isShowing()) {
-            bottomSheetDialog.dismiss();
+    public void onBackPressed() {
+        updateProfileInfo(currentProfile);
+        if (!currentProfile.equals(originalProfile)) {
+            openDialog(DialogID.DIALOG_CONFIRM_EXIT);
+        } else {
+            finish();
         }
     }
 
@@ -166,27 +147,57 @@ public class EditProfile extends AppCompatActivity {
     }
 
     @Override
-    public void onBackPressed() {
-
-        updateProfileInfo(currentProfile);
-        if (!currentProfile.equals(originalProfile)) {
-            new AlertDialog.Builder(this)
-                    .setMessage(getString(R.string.discard_changes))
-                    .setPositiveButton(getString(android.R.string.yes), (dialog, which) -> finish())
-                    .setNegativeButton(getString(android.R.string.no), null)
-                    .show();
-        } else {
-            finish();
-        }
-    }
-
-    @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
         updateProfileInfo(currentProfile);
         outState.putSerializable(ORIGINAL_PROFILE_KEY, originalProfile);
         outState.putSerializable(CURRENT_PROFILE_KEY, currentProfile);
+
+        if (dialogInstance != null && dialogInstance.isShowing()) {
+            outState.putSerializable(CURRENT_DIALOG_ID_KEY, dialogId);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode == RESULT_OK) {
+            switch (requestCode) {
+                case CAMERA:
+
+                    File imageFileCamera = new File(this.getApplicationContext()
+                            .getExternalFilesDir(Environment.DIRECTORY_PICTURES), IMAGE_PATH_TMP);
+
+                    if (imageFileCamera.exists()) {
+                        currentProfile.setLocalImagePath(imageFileCamera.getAbsolutePath());
+                        loadImageProfile(currentProfile);
+                    }
+                    break;
+
+                case GALLERY:
+                    if (data != null && data.getData() != null) {
+
+                        // Move the image to a temporary location
+                        File imageFileGallery = new File(this.getApplicationContext()
+                                .getExternalFilesDir(Environment.DIRECTORY_PICTURES), IMAGE_PATH_TMP);
+                        try {
+                            Utilities.copyFile(new File(Utilities.getRealPathFromURI(this, data.getData())), imageFileGallery);
+                        } catch (IOException e) {
+                            this.openDialog(DialogID.DIALOG_ERROR_FAILED_OBTAIN_PICTURE);
+                        }
+
+                        currentProfile.setLocalImagePath(imageFileGallery.getAbsolutePath());
+                        loadImageProfile(currentProfile);
+                    }
+                    break;
+
+                default:
+                    break;
+
+            }
+        }
     }
 
     private void galleryLoadPicture() {
@@ -208,43 +219,40 @@ public class EditProfile extends AppCompatActivity {
         }
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
+    private void commitChanges() {
+        updateProfileInfo(currentProfile);
 
-        ImageView imageView = findViewById(R.id.ep_profile_picture);
-        if (resultCode == RESULT_OK) {
-            switch (requestCode) {
-                case CAMERA:
+        if (!currentProfile.isValid()) {
+            this.openDialog(DialogID.DIALOG_ERROR_INCORRECT_VALUES);
+            return;
+        }
 
-                    File imageFileCamera = new File(this.getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES), IMAGE_PATH_TMP);
+        if (originalProfile == null || !originalProfile.equals(currentProfile)) {
 
-                    if (imageFileCamera.exists()) {
-                        currentProfile.setLocalImagePath(imageFileCamera.getAbsolutePath());
-                        loadImageProfile(currentProfile);
-                    }
-                    break;
+            this.openDialog(DialogID.DIALOG_LOADING);
+            List<Task<?>> tasks = new ArrayList<>();
 
-                case GALLERY:
-                    if (data != null && data.getData() != null) {
-
-                        // Move the image to a temporary location
-                        File imageFileGallery = new File(this.getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES), IMAGE_PATH_TMP);
-                        try {
-                            Utilities.copyFile(new File(Utilities.getRealPathFromURI(this, data.getData())), imageFileGallery);
-                        } catch (IOException e) {
-                            Utilities.showErrorMessage(this, R.string.failed_obtain_picture);
-                        }
-
-                        currentProfile.setLocalImagePath(imageFileGallery.getAbsolutePath());
-                        loadImageProfile(currentProfile);
-                    }
-                    break;
-
-                default:
-                    break;
-
+            tasks.add(currentProfile.saveToFirebase(this.getResources()));
+            if (currentProfile.imageUpdated(originalProfile)) {
+                tasks.add(currentProfile.updateImageOnFirebase());
             }
+
+            Tasks.whenAllSuccess(tasks)
+                    .addOnSuccessListener(t -> {
+                        Intent intent = new Intent(getApplicationContext(), ShowProfile.class);
+                        intent.putExtra(UserProfile.PROFILE_INFO_KEY, currentProfile);
+                        setResult(RESULT_OK, intent);
+                        this.closeDialog();
+                        finish();
+                    })
+                    .addOnFailureListener(t -> {
+                        this.closeDialog();
+                        this.openDialog(DialogID.DIALOG_ERROR_FAILED_SAVE_DATA);
+                    });
+
+        } else {
+            setResult(RESULT_CANCELED);
+            finish();
         }
     }
 
@@ -283,55 +291,51 @@ public class EditProfile extends AppCompatActivity {
         profile.update(usernameStr, locationStr, biographyStr);
     }
 
-    private void commitChanges() {
-        updateProfileInfo(currentProfile);
-
-        // TODO: remove on exit the tmp image
-        // TODO: handle better the two cases
-
-        if (!currentProfile.isValid()) {
-            Utilities.showErrorMessage(this, R.string.incorrect_values);
-            return;
-        }
-
-        if (originalProfile == null || !originalProfile.equals(currentProfile)) {
-
-            ProgressDialog dialog = ProgressDialog.show(this, "",
-                    "Saving your personal data. Please wait...", true);
-
-            List<Task<?>> tasks = new ArrayList<>();
-
-            tasks.add(currentProfile.saveToFirebase(this.getResources()));
-            if (currentProfile.imageUpdated(originalProfile)) {
-                tasks.add(currentProfile.updateImageOnFirebase());
-            }
-
-            Tasks.whenAllSuccess(tasks)
-                    .addOnSuccessListener(t -> {
-                        Intent intent = new Intent(getApplicationContext(), ShowProfile.class);
-                        intent.putExtra(UserProfile.PROFILE_INFO_KEY, currentProfile);
-                        setResult(RESULT_OK, intent);
-                        dialog.cancel();
-                        finish();
-                    })
-                    .addOnFailureListener(t -> {
-                        dialog.cancel();
-                        Utilities.showErrorMessage(this, R.string.failed_save_data);
-                    });
-
-        } else {
-            setResult(RESULT_CANCELED);
-            finish();
-        }
-    }
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
 
+        this.closeDialog();
+
         if (isFinishing() && currentProfile.getLocalImagePath() != null) {
             File tmpImageFile = new File(currentProfile.getLocalImagePath());
             tmpImageFile.deleteOnExit();
+        }
+    }
+
+    private void openDialog(@NonNull DialogID dialogId) {
+        closeDialog();
+
+        this.dialogId = dialogId;
+        switch (dialogId) {
+            case DIALOG_CHOOSE_PICTURE:
+                dialogInstance = openDialogChoosePicture();
+                break;
+
+            case DIALOG_LOADING:
+                dialogInstance = ProgressDialog.show(this, null,
+                        getString(R.string.saving_data), true);
+                break;
+
+            case DIALOG_CONFIRM_EXIT:
+                dialogInstance = new AlertDialog.Builder(this)
+                        .setMessage(getString(R.string.discard_changes))
+                        .setPositiveButton(getString(android.R.string.yes), (dialog, which) -> finish())
+                        .setNegativeButton(getString(android.R.string.no), null)
+                        .show();
+                break;
+
+            case DIALOG_ERROR_INCORRECT_VALUES:
+                dialogInstance = Utilities.openErrorDialog(this, R.string.incorrect_values);
+                break;
+
+            case DIALOG_ERROR_FAILED_SAVE_DATA:
+                dialogInstance = Utilities.openErrorDialog(this, R.string.failed_save_data);
+                break;
+
+            case DIALOG_ERROR_FAILED_OBTAIN_PICTURE:
+                dialogInstance = Utilities.openErrorDialog(this, R.string.failed_obtain_picture);
+                break;
         }
     }
 
@@ -344,5 +348,62 @@ public class EditProfile extends AppCompatActivity {
                 .placeholder(R.drawable.default_header)
                 .signature(new ObjectKey(profile.getProfilePictureLastModified()))
                 .into(imageView);
+    }
+
+    private Dialog openDialogChoosePicture() {
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        dialog.setContentView(R.layout.bottom_sheet_picture_dialog);
+
+        LinearLayout camera = dialog.findViewById(R.id.bs_camera_option);
+        LinearLayout gallery = dialog.findViewById(R.id.bs_gallery_option);
+        LinearLayout reset = dialog.findViewById(R.id.bs_reset_option);
+
+        assert camera != null;
+        assert gallery != null;
+        assert reset != null;
+
+        camera.setOnClickListener(v1 -> {
+            cameraTakePicture();
+            this.closeDialog();
+        });
+
+        gallery.setOnClickListener(v2 -> {
+            if (ContextCompat.checkSelfPermission(this,
+                    Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_EXTERNAL_STORAGE);
+            } else {
+                galleryLoadPicture();
+            }
+
+            this.closeDialog();
+        });
+
+        reset.setOnClickListener(v3 -> {
+            currentProfile.resetProfilePicture();
+            loadImageProfile(currentProfile);
+            this.closeDialog();
+        });
+
+        dialog.show();
+        return dialog;
+    }
+
+    private void closeDialog() {
+        if (dialogInstance != null && dialogInstance.isShowing()) {
+            dialogInstance.dismiss();
+        }
+        dialogId = DialogID.DIALOG_NONE;
+        dialogInstance = null;
+    }
+
+    private enum DialogID {
+        DIALOG_NONE,
+        DIALOG_CHOOSE_PICTURE,
+        DIALOG_LOADING,
+        DIALOG_CONFIRM_EXIT,
+        DIALOG_ERROR_INCORRECT_VALUES,
+        DIALOG_ERROR_FAILED_SAVE_DATA,
+        DIALOG_ERROR_FAILED_OBTAIN_PICTURE
     }
 }

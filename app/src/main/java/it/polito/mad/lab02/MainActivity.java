@@ -272,7 +272,7 @@ public class MainActivity extends AppCompatActivity
 
         }, error -> {
             dialog.cancel();
-            Utilities.showErrorMessage(this, R.string.failed_load_data);
+            Utilities.openErrorDialog(this, R.string.failed_load_data);
             signOut();
         });
     }
