@@ -1,11 +1,9 @@
 package it.polito.mad.lab02.utils;
 
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.media.ExifInterface;
-import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
 
 import java.io.ByteArrayOutputStream;
@@ -28,51 +26,6 @@ public class PictureUtilities {
         return image.compress(Bitmap.CompressFormat.WEBP, quality, out) ? out : null;
     }
 
-    private static Bitmap rotateImage(@NonNull Bitmap source, float angle) {
-        Matrix matrix = new Matrix();
-        matrix.postRotate(angle);
-        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(),
-                matrix, true);
-    }
-
-    public static Bitmap loadImage(String imagePath, int targetWidth, int targetHeight,
-                                   @NonNull Resources resources, @DrawableRes int defaultDrawable) {
-        ExifInterface ei = null;
-        Bitmap bitmap = null;
-
-        if (imagePath != null) {
-            try {
-                bitmap = PictureUtilities.getImage(imagePath, targetWidth, targetHeight);
-                ei = new ExifInterface(imagePath);
-            } catch (IOException e) {
-                bitmap = null;
-            }
-        }
-
-        // Use the default image
-        if (bitmap == null) {
-            return BitmapFactory.decodeResource(resources, defaultDrawable);
-        }
-
-        int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION,
-                ExifInterface.ORIENTATION_UNDEFINED);
-        switch (orientation) {
-
-            case ExifInterface.ORIENTATION_ROTATE_90:
-                return rotateImage(bitmap, 90);
-
-            case ExifInterface.ORIENTATION_ROTATE_180:
-                return rotateImage(bitmap, 180);
-
-            case ExifInterface.ORIENTATION_ROTATE_270:
-                return rotateImage(bitmap, 270);
-
-            case ExifInterface.ORIENTATION_NORMAL:
-            default:
-                return bitmap;
-        }
-    }
-
     private static Bitmap getImage(String imagePath, int targetWidth, int targetHeight) {
 
         // Get the dimensions of the bitmap
@@ -93,6 +46,47 @@ public class PictureUtilities {
         bmOptions.inSampleSize = scaleFactor;
         bmOptions.inPurgeable = true;
 
-        return BitmapFactory.decodeFile(imagePath, bmOptions);
+        Bitmap image = BitmapFactory.decodeFile(imagePath, bmOptions);
+        if (image == null) {
+            return null;
+        }
+
+        return rotateImage(image, getRotation(imagePath));
+    }
+
+    private static int getRotation(@NonNull String imagePath) {
+        ExifInterface exifInterface = null;
+
+        try {
+            exifInterface = new ExifInterface(imagePath);
+        } catch (IOException e) {
+            return 0;
+        }
+
+
+        int orientation = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+                ExifInterface.ORIENTATION_UNDEFINED);
+        switch (orientation) {
+
+            case ExifInterface.ORIENTATION_ROTATE_90:
+                return 90;
+
+            case ExifInterface.ORIENTATION_ROTATE_180:
+                return 180;
+
+            case ExifInterface.ORIENTATION_ROTATE_270:
+                return 270;
+
+            case ExifInterface.ORIENTATION_NORMAL:
+            default:
+                return 0;
+        }
+    }
+
+    private static Bitmap rotateImage(@NonNull Bitmap source, float angle) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(angle);
+        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(),
+                matrix, true);
     }
 }
