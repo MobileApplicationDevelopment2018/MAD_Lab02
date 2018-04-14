@@ -2,34 +2,30 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:layout_height="match_parent"
+    android:orientation="horizontal">
 
-    <android.support.v7.widget.Toolbar
-        android:id="@+id/sp_toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@color/colorPrimary"
-        android:elevation="4dp"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark"
-        app:popupTheme="@style/ThemeOverlay.AppCompat.Dark" />
+    <ImageView
+        android:id="@+id/sp_profile_picture"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="4"
+        android:contentDescription="@string/profile_picture"
+        android:scaleType="centerCrop"
+        android:src="@drawable/default_header" />
 
     <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="6"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:paddingTop="6dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
-
-            <ImageView
-                android:id="@+id/sp_profile_picture"
-                android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:contentDescription="@string/profile_picture"
-                android:scaleType="centerCrop"
-                android:src="@drawable/default_header" />
 
             <LinearLayout
                 android:id="@+id/sp_layout_header"
@@ -37,20 +33,20 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:paddingBottom="12dp"
-                android:paddingLeft="16dp"
-                android:paddingRight="16dp"
                 android:paddingTop="6dp">
 
                 <View
-                    android:layout_width="40dp"
+                    android:layout_width="48dp"
                     android:layout_height="match_parent" />
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_vertical"
+                    android:layout_marginEnd="8dp"
                     android:layout_marginLeft="8dp"
                     android:layout_marginRight="8dp"
+                    android:layout_marginStart="8dp"
                     android:layout_weight="1"
                     android:orientation="vertical"
                     android:paddingBottom="10dp"
@@ -62,8 +58,8 @@
                         android:layout_height="wrap_content"
                         android:text="@string/default_username"
                         android:textAlignment="center"
-                        android:textColor="@color/colorTextAccent"
-                        android:textAppearance="@style/TextAppearance.AppCompat.Headline" />
+                        android:textAppearance="@style/TextAppearance.AppCompat.Headline"
+                        android:textColor="@color/colorTextAccent" />
 
                     <TextView
                         android:id="@+id/sp_location"
@@ -72,8 +68,8 @@
                         android:layout_marginTop="8dp"
                         android:text="@string/default_city"
                         android:textAlignment="center"
-                        android:textColor="@color/colorText"
-                        android:textAppearance="@style/TextAppearance.AppCompat.Subhead" />
+                        android:textAppearance="@style/TextAppearance.AppCompat.Subhead"
+                        android:textColor="@color/colorText" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -148,8 +144,8 @@
                         android:layout_height="wrap_content"
                         android:text="@string/number_zero"
                         android:textAlignment="center"
-                        android:textColor="@color/colorTextAccent"
-                        android:textAppearance="@style/TextAppearance.AppCompat.Title" />
+                        android:textAppearance="@style/TextAppearance.AppCompat.Title"
+                        android:textColor="@color/colorTextAccent" />
 
                     <TextView
                         android:id="@+id/sp_lent_books_text"
@@ -157,8 +153,8 @@
                         android:layout_height="match_parent"
                         android:text="@string/lent_books"
                         android:textAlignment="center"
-                        android:textColor="@color/colorText"
-                        android:textAppearance="@style/TextAppearance.AppCompat.Caption" />
+                        android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+                        android:textColor="@color/colorText" />
 
                 </LinearLayout>
 
@@ -179,8 +175,8 @@
                         android:layout_height="wrap_content"
                         android:text="@string/number_zero"
                         android:textAlignment="center"
-                        android:textColor="@color/colorTextAccent"
-                        android:textAppearance="@style/TextAppearance.AppCompat.Title" />
+                        android:textAppearance="@style/TextAppearance.AppCompat.Title"
+                        android:textColor="@color/colorTextAccent" />
 
                     <TextView
                         android:id="@+id/sp_borrowed_books_text"
@@ -188,8 +184,8 @@
                         android:layout_height="match_parent"
                         android:text="@string/borrowed_books"
                         android:textAlignment="center"
-                        android:textColor="@color/colorText"
-                        android:textAppearance="@style/TextAppearance.AppCompat.Caption" />
+                        android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+                        android:textColor="@color/colorText" />
 
                 </LinearLayout>
 
@@ -210,8 +206,8 @@
                         android:layout_height="wrap_content"
                         android:text="@string/number_zero"
                         android:textAlignment="center"
-                        android:textColor="@color/colorTextAccent"
-                        android:textAppearance="@style/TextAppearance.AppCompat.Title" />
+                        android:textAppearance="@style/TextAppearance.AppCompat.Title"
+                        android:textColor="@color/colorTextAccent" />
 
                     <TextView
                         android:id="@+id/sp_to_be_returned_text"
@@ -219,8 +215,8 @@
                         android:layout_height="match_parent"
                         android:text="@string/to_be_returned"
                         android:textAlignment="center"
-                        android:textColor="@color/colorText"
-                        android:textAppearance="@style/TextAppearance.AppCompat.Caption" />
+                        android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+                        android:textColor="@color/colorText" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -236,8 +232,8 @@
                 android:padding="16dp"
                 android:text="@string/default_biography"
                 android:textAlignment="center"
-                android:textColor="@color/colorText"
-                android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
+                android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                android:textColor="@color/colorText" />
 
         </LinearLayout>
 

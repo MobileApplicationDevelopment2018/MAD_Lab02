@@ -60,7 +60,12 @@ public class Utilities {
     }
 
     public static boolean equals(Object a, Object b) {
-        return a == b || (a != null) && (b != null) && a.equals(b);
+        return a == b || (a != null && b != null && a.equals(b));
+    }
+
+    public static boolean equalsNullOrWhiteSpace(String a, String b) {
+        return Utilities.equals(a, b) ||
+                (Utilities.isNullOrWhitespace(a) && Utilities.isNullOrWhitespace(b));
     }
 
     public static void copyFile(File sourceFile, File destFile) throws IOException {

@@ -77,6 +77,10 @@ public class UserProfile implements Serializable {
         }
     }
 
+    private static String getUsernameFromEmail(@NonNull String email) {
+        return email.substring(0, email.indexOf('@'));
+    }
+
     public static void loadFromFirebase(@NonNull OnDataLoadSuccess onSuccess, @NonNull OnDataLoadFailure onFailure) {
 
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
@@ -99,12 +103,14 @@ public class UserProfile implements Serializable {
                 });
     }
 
-    private static String getUsernameFromEmail(@NonNull String email) {
-        return email.substring(0, email.indexOf('@'));
+    public void setProfilePicture(String path) {
+        this.data.profile.hasProfilePicture = path != null;
+        this.data.profile.profilePictureLastModified = System.currentTimeMillis();
+        localImagePath = path;
     }
 
     public void resetProfilePicture() {
-        setLocalImagePath(null);
+        setProfilePicture(null);
     }
 
     public void update(@NonNull String username, @NonNull String location, @NonNull String biography) {
@@ -117,6 +123,10 @@ public class UserProfile implements Serializable {
         this.data.profile.username = Utilities.trimString(this.data.profile.username, resources.getInteger(R.integer.max_length_username));
         this.data.profile.location = Utilities.trimString(this.data.profile.location, resources.getInteger(R.integer.max_length_location));
         this.data.profile.biography = Utilities.trimString(this.data.profile.biography, resources.getInteger(R.integer.max_length_biography));
+    }
+
+    public String getEmail() {
+        return this.data.profile.email;
     }
 
     public String getUsername() {
@@ -135,6 +145,45 @@ public class UserProfile implements Serializable {
         return this.data.profile.hasProfilePicture;
     }
 
+    public long getProfilePictureLastModified() {
+        return this.data.profile.profilePictureLastModified;
+    }
+
+    public Object getProfilePictureReference() {
+        return this.localImagePath == null
+                ? this.hasProfilePicture()
+                ? this.getProfilePictureReferenceFirebase()
+                : null
+                : this.getLocalImagePath();
+    }
+
+    private StorageReference getProfilePictureReferenceFirebase() {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        assert currentUser != null;
+
+        return FirebaseStorage.getInstance().getReference()
+                .child(FIREBASE_STORAGE_USERS_FOLDER)
+                .child(currentUser.getUid())
+                .child(FIREBASE_STORAGE_IMAGE_NAME);
+    }
+
+    public String getLocalImagePath() {
+        return this.localImagePath;
+    }
+
+    public boolean profileUpdated(UserProfile other) {
+        return !Utilities.equals(this.getEmail(), other.getEmail()) ||
+                !Utilities.equals(this.getUsername(), other.getUsername()) ||
+                !Utilities.equals(this.getLocation(), other.getLocation()) ||
+                !Utilities.equalsNullOrWhiteSpace(this.getBiography(), other.getBiography()) ||
+                imageUpdated(other);
+    }
+
+    public boolean imageUpdated(UserProfile other) {
+        return this.hasProfilePicture() != other.hasProfilePicture() ||
+                !Utilities.equals(this.localImagePath, other.localImagePath);
+    }
+
     public float getRating() {
         return this.data.statistics.rating;
     }
@@ -149,14 +198,6 @@ public class UserProfile implements Serializable {
 
     public int getToBeReturnedBooks() {
         return this.data.statistics.toBeReturnedBooks;
-    }
-
-    public String getEmail() {
-        return this.data.profile.email;
-    }
-
-    public long getProfilePictureLastModified() {
-        return this.data.profile.profilePictureLastModified;
     }
 
     public boolean isAnonymous() {
@@ -176,35 +217,6 @@ public class UserProfile implements Serializable {
                 Utilities.isValidLocation(this.data.profile.location);
     }
 
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) {
-            return true;
-        }
-
-        if (!(other instanceof UserProfile)) {
-            return false;
-        }
-
-        UserProfile otherUP = (UserProfile) other;
-
-        return Utilities.equals(this.getEmail(), otherUP.getEmail()) &&
-                Utilities.equals(this.getUsername(), otherUP.getUsername()) &&
-                Utilities.equals(this.getLocation(), otherUP.getLocation()) &&
-                Utilities.equals(this.getBiography(), otherUP.getBiography()) &&
-                this.hasProfilePicture() == otherUP.hasProfilePicture() &&
-                Utilities.equals(this.localImagePath, otherUP.localImagePath) &&
-                Float.compare(this.getRating(), otherUP.getRating()) == 0 &&
-                this.getLentBooks() == otherUP.getLentBooks() &&
-                this.getBorrowedBooks() == otherUP.getBorrowedBooks() &&
-                this.getToBeReturnedBooks() == otherUP.getToBeReturnedBooks();
-    }
-
-    public boolean imageUpdated(UserProfile other) {
-        return this.hasProfilePicture() != other.hasProfilePicture() ||
-                !Utilities.equals(this.localImagePath, other.localImagePath);
-    }
-
     public Task<Void> saveToFirebase(@NonNull Resources resources) {
         this.trimFields(resources);
 
@@ -219,7 +231,7 @@ public class UserProfile implements Serializable {
                 .setValue(this.data.profile);
     }
 
-    public Task<?> updateImageOnFirebase() {
+    public Task<?> saveProfilePictureToFirebase() {
         if (hasProfilePicture() && localImagePath != null) {
 
             // TODO: check if it is necessary to do this in a worker thread
@@ -230,44 +242,16 @@ public class UserProfile implements Serializable {
                         .setContentType("image/webp")
                         .build();
 
-                return getProfilePictureReference()
+                return getProfilePictureReferenceFirebase()
                         .putBytes(out.toByteArray(), metadata)
                         .addOnSuccessListener(t ->
                                 this.localImagePath = null);
             }
         }
 
-        return getProfilePictureReference()
+        return getProfilePictureReferenceFirebase()
                 .delete();
 
-    }
-
-    private StorageReference getProfilePictureReference() {
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        assert currentUser != null;
-
-        return FirebaseStorage.getInstance().getReference()
-                .child(FIREBASE_STORAGE_USERS_FOLDER)
-                .child(currentUser.getUid())
-                .child(FIREBASE_STORAGE_IMAGE_NAME);
-    }
-
-    public String getLocalImagePath() {
-        return this.localImagePath;
-    }
-
-    public void setLocalImagePath(String path) {
-        this.data.profile.hasProfilePicture = path != null;
-        this.data.profile.profilePictureLastModified = System.currentTimeMillis();
-        localImagePath = path;
-    }
-
-    public Object getImageReference() {
-        return this.localImagePath == null
-                ? this.hasProfilePicture()
-                ? this.getProfilePictureReference()
-                : null
-                : this.localImagePath;
     }
 
     public interface OnDataLoadSuccess {
@@ -275,6 +259,7 @@ public class UserProfile implements Serializable {
     }
 
     public interface OnDataLoadFailure {
+
         void apply(DatabaseError databaseError);
     }
 
@@ -296,6 +281,7 @@ public class UserProfile implements Serializable {
         }
 
         private static class Profile implements Serializable {
+
             public String email;
             public String username;
             public String location;

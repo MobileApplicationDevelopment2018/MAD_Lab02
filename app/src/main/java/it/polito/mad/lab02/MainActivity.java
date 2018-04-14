@@ -1,5 +1,6 @@
 package it.polito.mad.lab02;
 
+import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.net.Uri;
@@ -9,12 +10,9 @@ import android.support.annotation.StringRes;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
@@ -30,21 +28,19 @@ import com.google.firebase.auth.FirebaseAuth;
 import java.util.Arrays;
 
 import it.polito.mad.lab02.data.UserProfile;
+import it.polito.mad.lab02.utils.AppCompatActivityDialog;
 import it.polito.mad.lab02.utils.Utilities;
 
-public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, AddBookFragment.OnFragmentInteractionListener, ExploreFragment.OnFragmentInteractionListener {
+public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
+        implements NavigationView.OnNavigationItemSelectedListener,
+        AddBookFragment.OnFragmentInteractionListener {
 
     private static final int RC_SIGN_IN = 1;
-    private static final int RC_COMPLETE_REGISTRATION = 2;
-    private static final int RC_SHOW_PROFILE = 3;
+    private static final int RC_EDIT_PROFILE = 5;
+    private static final int RC_EDIT_PROFILE_WELCOME = 6;
 
     private FirebaseAuth mAuth;
     private UserProfile localProfile;
-
-
-    FragmentManager fragmentManager;
-    FragmentTransaction fragmentTransaction;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,22 +60,128 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-
         // Profile already cached locally
         if (savedInstanceState != null) {
             localProfile = (UserProfile) savedInstanceState.getSerializable(UserProfile.PROFILE_INFO_KEY);
-            if (localProfile != null) {
-                updateNavigationView();
-                return;
-            }
         }
 
         // Profile to be obtained from database
-        localProfile = new UserProfile();
-        if (mAuth.getCurrentUser() != null) {
-            loadProfileFromFirebase();
+        if (localProfile == null) {
+            localProfile = new UserProfile();
+            if (mAuth.getCurrentUser() != null) {
+                loadProfileFromFirebase();
+            }
+        }
+
+        updateNavigationView();
+        if (savedInstanceState == null) {
+            showDefaultFragment();
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
         } else {
-            updateNavigationView();
+            super.onBackPressed();
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putSerializable(UserProfile.PROFILE_INFO_KEY, localProfile);
+    }
+
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        // Handle navigation view item clicks here.
+
+        int id = item.getItemId();
+
+        switch (id) {
+            case R.id.nav_explore:
+                this.replaceFragment(ExploreFragment.newInstance());
+                break;
+
+            case R.id.nav_sign_in:
+                signIn();
+                break;
+
+            case R.id.nav_add_book:
+                this.replaceFragment(AddBookFragment.newInstance());
+                break;
+
+            case R.id.nav_profile:
+                this.replaceFragment(ShowProfileFragment.newInstance(localProfile));
+                break;
+
+            case R.id.nav_sign_out:
+                signOut();
+                break;
+        }
+
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
+        drawer.closeDrawer(GravityCompat.START);
+        return true;
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.sp_edit_profile:
+                this.showEditProfileActivity(RC_EDIT_PROFILE);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        switch (requestCode) {
+            case RC_SIGN_IN:
+                IdpResponse response = IdpResponse.fromResultIntent(data);
+
+                // Successfully signed in
+                if (resultCode == RESULT_OK && mAuth.getCurrentUser() != null) {
+                    loadProfileFromFirebase();
+                    return;
+                }
+
+                showDefaultFragment();
+
+                if (response == null) {
+                    showToast(R.string.sign_in_cancelled);
+                    return;
+                }
+
+                if (response.getError() != null && response.getError().getErrorCode() == ErrorCodes.NO_NETWORK) {
+                    showToast(R.string.sign_in_no_internet_connection);
+                    return;
+                }
+
+                showToast(R.string.sign_in_unknown_error);
+                break;
+
+            case RC_EDIT_PROFILE:
+                if (resultCode == RESULT_OK) {
+                    localProfile = (UserProfile) data.getSerializableExtra(UserProfile.PROFILE_INFO_KEY);
+                    this.replaceFragment(ShowProfileFragment.newInstance(localProfile));
+                }
+                break;
+
+            case RC_EDIT_PROFILE_WELCOME:
+                if (resultCode == RESULT_OK) {
+                    localProfile = (UserProfile) data.getSerializableExtra(UserProfile.PROFILE_INFO_KEY);
+                }
+                break;
+
+            default:
+                break;
         }
     }
 
@@ -110,117 +212,6 @@ public class MainActivity extends AppCompatActivity
         drawer.getMenu().getItem(0).setChecked(true);
     }
 
-    @Override
-    public void onBackPressed() {
-        DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
-            drawer.closeDrawer(GravityCompat.START);
-        } else {
-            super.onBackPressed();
-        }
-    }
-
-
-    @Override
-    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        // Handle navigation view item clicks here.
-
-        int id = item.getItemId();
-
-        switch (id) {
-
-            case R.id.nav_explore:
-                Fragment explore = ExploreFragment.newInstance();
-
-                fragmentManager = getSupportFragmentManager();
-                fragmentTransaction = fragmentManager.beginTransaction();
-
-                fragmentTransaction.replace(R.id.content_frame, explore).addToBackStack(null);
-                fragmentTransaction.commit();
-                break;
-
-            case R.id.nav_sign_in:
-                signIn();
-                break;
-
-            case R.id.nav_add_book:
-                Fragment addBook = AddBookFragment.newInstance();
-
-                fragmentManager = getSupportFragmentManager();
-                fragmentTransaction = fragmentManager.beginTransaction();
-
-                fragmentTransaction.replace(R.id.content_frame, addBook).addToBackStack(null);
-                fragmentTransaction.commit();
-                break;
-
-            case R.id.nav_profile:
-                Intent toShowProfile = new Intent(getApplicationContext(), ShowProfile.class);
-                toShowProfile.putExtra(UserProfile.PROFILE_INFO_KEY, localProfile);
-                startActivityForResult(toShowProfile, RC_SHOW_PROFILE);
-                break;
-
-            case R.id.nav_sign_out:
-                signOut();
-                break;
-        }
-
-        DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
-        return true;
-    }
-
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-
-        outState.putSerializable(UserProfile.PROFILE_INFO_KEY, localProfile);
-    }
-
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        switch (requestCode) {
-            case RC_SIGN_IN:
-                IdpResponse response = IdpResponse.fromResultIntent(data);
-
-                // Successfully signed in
-                if (resultCode == RESULT_OK && mAuth.getCurrentUser() != null) {
-                    loadProfileFromFirebase();
-                    return;
-                }
-
-                if (response == null) {
-                    showToast(R.string.sign_in_cancelled);
-                    return;
-                }
-
-                if (response.getError() != null && response.getError().getErrorCode() == ErrorCodes.NO_NETWORK) {
-                    showToast(R.string.sign_in_no_internet_connection);
-                    return;
-                }
-
-                showToast(R.string.sign_in_unknown_error);
-                break;
-
-            case RC_COMPLETE_REGISTRATION:
-                if (resultCode == RESULT_OK) {
-                    localProfile = (UserProfile) data.getSerializableExtra(UserProfile.PROFILE_INFO_KEY);
-                    updateNavigationView();
-                }
-
-            case RC_SHOW_PROFILE:
-                if (resultCode == RESULT_OK) {
-                    localProfile = (UserProfile) data.getSerializableExtra(UserProfile.PROFILE_INFO_KEY);
-                    updateNavigationView();
-                }
-
-                break;
-
-            default:
-                break;
-        }
-    }
-
     private void signIn() {
         startActivityForResult(
                 AuthUI.getInstance().createSignInIntentBuilder()
@@ -234,18 +225,15 @@ public class MainActivity extends AppCompatActivity
     private void signOut() {
         AuthUI.getInstance()
                 .signOut(this)
-                .addOnSuccessListener(t -> {
-                    onSignOut();
-                })
-                .addOnFailureListener(t -> {
-                    showToast(R.string.sign_out_failed);
-                });
+                .addOnSuccessListener(t -> onSignOut())
+                .addOnFailureListener(t -> showToast(R.string.sign_out_failed));
     }
 
     private void onSignOut() {
         showToast(R.string.sign_out_succeeded);
         localProfile = new UserProfile();
         updateNavigationView();
+        showDefaultFragment();
     }
 
     private void showToast(@StringRes int message) {
@@ -257,10 +245,10 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void loadProfileFromFirebase() {
-        ProgressDialog dialog = ProgressDialog.show(this, "",
-                getString(R.string.fui_progress_dialog_loading), true);
+        this.openDialog(DialogID.DIALOG_LOADING);
+
         UserProfile.loadFromFirebase(data -> {
-            dialog.cancel();
+            this.closeDialog();
 
             if (data == null) {
                 completeRegistration();
@@ -271,8 +259,7 @@ public class MainActivity extends AppCompatActivity
             }
 
         }, error -> {
-            dialog.cancel();
-            Utilities.openErrorDialog(this, R.string.failed_load_data);
+            this.openDialog(DialogID.DIALOG_ERROR_RETRIEVE_DIALOG);
             signOut();
         });
     }
@@ -285,17 +272,57 @@ public class MainActivity extends AppCompatActivity
 
         String message = getString(R.string.sign_in_welcome) + " " + localProfile.getUsername();
         Snackbar.make(findViewById(R.id.main_coordinator_layout), message, Snackbar.LENGTH_LONG)
-                .setAction(R.string.edit_profile, v -> {
-                    Intent toEditProfile = new Intent(getApplicationContext(), EditProfile.class);
-                    toEditProfile.putExtra(UserProfile.PROFILE_INFO_KEY, localProfile);
-                    startActivityForResult(toEditProfile, RC_SHOW_PROFILE);
-                }).show();
+                .setAction(R.string.edit_profile, v -> showEditProfileActivity(RC_EDIT_PROFILE_WELCOME))
+                .show();
 
         updateNavigationView();
+    }
+
+    private void replaceFragment(Fragment instance) {
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.content_frame, instance)
+                .commit();
+    }
+
+    private void showDefaultFragment() {
+        NavigationView drawer = findViewById(R.id.nav_view);
+        drawer.getMenu().getItem(0).setChecked(true);
+        replaceFragment(ExploreFragment.newInstance());
+    }
+
+    private void showEditProfileActivity(int code) {
+        Intent toEditProfile = new Intent(getApplicationContext(), EditProfile.class);
+        toEditProfile.putExtra(UserProfile.PROFILE_INFO_KEY, localProfile);
+        startActivityForResult(toEditProfile, code);
+    }
+
+    @Override
+    protected void openDialog(@NonNull DialogID dialogId) {
+        super.openDialog(dialogId);
+
+        Dialog dialog = null;
+        switch (dialogId) {
+            case DIALOG_LOADING:
+                dialog = ProgressDialog.show(this, "",
+                        getString(R.string.fui_progress_dialog_loading), true);
+                break;
+            case DIALOG_ERROR_RETRIEVE_DIALOG:
+                dialog = Utilities.openErrorDialog(this, R.string.failed_load_data);
+        }
+
+        if (dialog != null) {
+            setDialogInstance(dialog);
+        }
     }
 
     @Override
     public void onFragmentInteraction(Uri uri) {
 
+    }
+
+    public enum DialogID {
+        DIALOG_LOADING,
+        DIALOG_ERROR_RETRIEVE_DIALOG;
     }
 }

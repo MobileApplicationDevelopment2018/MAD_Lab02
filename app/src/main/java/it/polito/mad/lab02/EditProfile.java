@@ -16,7 +16,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -35,25 +34,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 import it.polito.mad.lab02.data.UserProfile;
+import it.polito.mad.lab02.utils.AppCompatActivityDialog;
 import it.polito.mad.lab02.utils.GlideApp;
 import it.polito.mad.lab02.utils.TextWatcherUtilities;
 import it.polito.mad.lab02.utils.Utilities;
 
-public class EditProfile extends AppCompatActivity {
+public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
 
     private static final String ORIGINAL_PROFILE_KEY = "original_profile";
     private static final String CURRENT_PROFILE_KEY = "current_profile";
-    private static final String CURRENT_DIALOG_ID_KEY = "current_dialog_id";
     private static final String IMAGE_PATH_TMP = "profile_picture_tmp";
 
     private static final int CAMERA = 2;
     private static final int GALLERY = 3;
     private static final int PERMISSIONS_REQUEST_EXTERNAL_STORAGE = 4;
-    private DialogID dialogId;
 
     private EditText username, location, biography;
     private UserProfile originalProfile, currentProfile;
-    private Dialog dialogInstance;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,18 +66,11 @@ public class EditProfile extends AppCompatActivity {
             // If they was saved, load them
             originalProfile = (UserProfile) savedInstanceState.getSerializable(ORIGINAL_PROFILE_KEY);
             currentProfile = (UserProfile) savedInstanceState.getSerializable(CURRENT_PROFILE_KEY);
-            dialogId = (DialogID) savedInstanceState.getSerializable(CURRENT_DIALOG_ID_KEY);
         } else {
             // Otherwise, obtain them through the intent
             originalProfile = (UserProfile) this.getIntent().getSerializableExtra(UserProfile.PROFILE_INFO_KEY);
             currentProfile = new UserProfile(originalProfile);
         }
-
-        // Restore open dialog (if any)
-        if (dialogId == null) {
-            dialogId = DialogID.DIALOG_NONE;
-        }
-        this.openDialog(dialogId);
 
         // Set the toolbar
         final Toolbar toolbar = findViewById(R.id.ep_toolbar);
@@ -113,13 +103,31 @@ public class EditProfile extends AppCompatActivity {
     }
 
     @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        this.closeDialog();
+
+        if (isFinishing() && currentProfile.getLocalImagePath() != null) {
+            File tmpImageFile = new File(currentProfile.getLocalImagePath());
+            tmpImageFile.deleteOnExit();
+        }
+    }
+
+    @Override
     public void onBackPressed() {
         updateProfileInfo(currentProfile);
-        if (!currentProfile.equals(originalProfile)) {
+        if (currentProfile.profileUpdated(originalProfile)) {
             openDialog(DialogID.DIALOG_CONFIRM_EXIT);
         } else {
             finish();
         }
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        onBackPressed();
+        return true;
     }
 
     @Override
@@ -141,22 +149,12 @@ public class EditProfile extends AppCompatActivity {
     }
 
     @Override
-    public boolean onSupportNavigateUp() {
-        onBackPressed();
-        return true;
-    }
-
-    @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
         updateProfileInfo(currentProfile);
         outState.putSerializable(ORIGINAL_PROFILE_KEY, originalProfile);
         outState.putSerializable(CURRENT_PROFILE_KEY, currentProfile);
-
-        if (dialogInstance != null && dialogInstance.isShowing()) {
-            outState.putSerializable(CURRENT_DIALOG_ID_KEY, dialogId);
-        }
     }
 
     @Override
@@ -171,7 +169,7 @@ public class EditProfile extends AppCompatActivity {
                             .getExternalFilesDir(Environment.DIRECTORY_PICTURES), IMAGE_PATH_TMP);
 
                     if (imageFileCamera.exists()) {
-                        currentProfile.setLocalImagePath(imageFileCamera.getAbsolutePath());
+                        currentProfile.setProfilePicture(imageFileCamera.getAbsolutePath());
                         loadImageProfile(currentProfile);
                     }
                     break;
@@ -188,7 +186,7 @@ public class EditProfile extends AppCompatActivity {
                             this.openDialog(DialogID.DIALOG_ERROR_FAILED_OBTAIN_PICTURE);
                         }
 
-                        currentProfile.setLocalImagePath(imageFileGallery.getAbsolutePath());
+                        currentProfile.setProfilePicture(imageFileGallery.getAbsolutePath());
                         loadImageProfile(currentProfile);
                     }
                     break;
@@ -197,6 +195,25 @@ public class EditProfile extends AppCompatActivity {
                     break;
 
             }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+
+            case PERMISSIONS_REQUEST_EXTERNAL_STORAGE: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    galleryLoadPicture();
+                }
+
+                return;
+            }
+
+            default:
+                break;
         }
     }
 
@@ -227,19 +244,19 @@ public class EditProfile extends AppCompatActivity {
             return;
         }
 
-        if (originalProfile == null || !originalProfile.equals(currentProfile)) {
+        if (originalProfile == null || originalProfile.profileUpdated(currentProfile)) {
 
-            this.openDialog(DialogID.DIALOG_LOADING);
+            this.openDialog(DialogID.DIALOG_SAVING);
             List<Task<?>> tasks = new ArrayList<>();
 
             tasks.add(currentProfile.saveToFirebase(this.getResources()));
             if (currentProfile.imageUpdated(originalProfile)) {
-                tasks.add(currentProfile.updateImageOnFirebase());
+                tasks.add(currentProfile.saveProfilePictureToFirebase());
             }
 
             Tasks.whenAllSuccess(tasks)
                     .addOnSuccessListener(t -> {
-                        Intent intent = new Intent(getApplicationContext(), ShowProfile.class);
+                        Intent intent = new Intent(getApplicationContext(), ShowProfileFragment.class);
                         intent.putExtra(UserProfile.PROFILE_INFO_KEY, currentProfile);
                         setResult(RESULT_OK, intent);
                         this.closeDialog();
@@ -256,31 +273,23 @@ public class EditProfile extends AppCompatActivity {
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode) {
-
-            case PERMISSIONS_REQUEST_EXTERNAL_STORAGE: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    galleryLoadPicture();
-                }
-
-                return;
-            }
-
-            default:
-                break;
-        }
-    }
-
     private void fillViews(UserProfile profile) {
         username.setText(profile.getUsername());
         location.setText(profile.getLocation());
         biography.setText(profile.getBiography());
 
         loadImageProfile(profile);
+    }
+
+    private void loadImageProfile(UserProfile profile) {
+        ImageView imageView = findViewById(R.id.ep_profile_picture);
+
+        GlideApp.with(this)
+                .load(profile.getProfilePictureReference())
+                .centerCrop()
+                .placeholder(R.drawable.default_header)
+                .signature(new ObjectKey(profile.getProfilePictureLastModified()))
+                .into(imageView);
     }
 
     private void updateProfileInfo(UserProfile profile) {
@@ -292,27 +301,16 @@ public class EditProfile extends AppCompatActivity {
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
+    protected void openDialog(@NonNull DialogID dialogId) {
+        super.openDialog(dialogId);
 
-        this.closeDialog();
-
-        if (isFinishing() && currentProfile.getLocalImagePath() != null) {
-            File tmpImageFile = new File(currentProfile.getLocalImagePath());
-            tmpImageFile.deleteOnExit();
-        }
-    }
-
-    private void openDialog(@NonNull DialogID dialogId) {
-        closeDialog();
-
-        this.dialogId = dialogId;
+        Dialog dialogInstance = null;
         switch (dialogId) {
             case DIALOG_CHOOSE_PICTURE:
                 dialogInstance = openDialogChoosePicture();
                 break;
 
-            case DIALOG_LOADING:
+            case DIALOG_SAVING:
                 dialogInstance = ProgressDialog.show(this, null,
                         getString(R.string.saving_data), true);
                 break;
@@ -337,17 +335,10 @@ public class EditProfile extends AppCompatActivity {
                 dialogInstance = Utilities.openErrorDialog(this, R.string.failed_obtain_picture);
                 break;
         }
-    }
 
-    private void loadImageProfile(UserProfile profile) {
-        ImageView imageView = findViewById(R.id.ep_profile_picture);
-
-        GlideApp.with(this)
-                .load(profile.getImageReference())
-                .centerCrop()
-                .placeholder(R.drawable.default_header)
-                .signature(new ObjectKey(profile.getProfilePictureLastModified()))
-                .into(imageView);
+        if (dialogInstance != null) {
+            this.setDialogInstance(dialogInstance);
+        }
     }
 
     private Dialog openDialogChoosePicture() {
@@ -389,18 +380,10 @@ public class EditProfile extends AppCompatActivity {
         return dialog;
     }
 
-    private void closeDialog() {
-        if (dialogInstance != null && dialogInstance.isShowing()) {
-            dialogInstance.dismiss();
-        }
-        dialogId = DialogID.DIALOG_NONE;
-        dialogInstance = null;
-    }
-
-    private enum DialogID {
+    public enum DialogID {
         DIALOG_NONE,
         DIALOG_CHOOSE_PICTURE,
-        DIALOG_LOADING,
+        DIALOG_SAVING,
         DIALOG_CONFIRM_EXIT,
         DIALOG_ERROR_INCORRECT_VALUES,
         DIALOG_ERROR_FAILED_SAVE_DATA,
