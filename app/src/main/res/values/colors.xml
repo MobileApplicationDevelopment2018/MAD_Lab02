@@ -18,4 +18,6 @@
     <color name="light_green_700">#689F38</color>
     <color name="light_green_800">#558B2F</color>
     <color name="light_green_900">#33691E</color>
+
+    <color name="ic_drawer_picture_background">#F1F7ED</color>
 </resources>
