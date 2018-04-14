@@ -251,4 +251,5 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
     public interface OnFragmentInteractionListener {
         void onFragmentInteraction();
     }
+
 }

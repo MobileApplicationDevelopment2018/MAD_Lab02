@@ -289,7 +289,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
         }
         runOnUiThread(() -> {
             barcodeDialog = new AlertDialog.Builder(this)
-                    .setTitle("code retrieved")
+                    .setTitle(getResources().getString(R.string.code_retrieved))
                     .setMessage(barcode.displayValue)
                     .setPositiveButton("OK", (dialog, wich) -> {
                         Intent data = new Intent();
