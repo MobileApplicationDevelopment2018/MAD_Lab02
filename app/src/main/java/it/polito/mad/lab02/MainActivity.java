@@ -81,18 +81,10 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
-            //drawer.closeDrawer(GravityCompat.START);
+        if (drawer.isDrawerOpen(GravityCompat.START))
+            drawer.closeDrawer(GravityCompat.START);
+        else
             super.onBackPressed();
-        } else {
-            if (!toolbar.getTitle().toString().equals(getResources().getString(R.string.explore))) {
-                drawer.openDrawer(GravityCompat.START);
-            } else
-                super.onBackPressed();
-        }
-
-
     }
 
     @Override
