@@ -3,209 +3,217 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_marginLeft="16dp"
+
+    android:layout_marginRight="16dp"
+    android:layout_marginTop="16dp"
+    android:orientation="vertical"
     tools:context=".AddBookFragment">
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_marginTop="16dp"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp">
+        android:layout_height="match_parent">
 
-        <ScrollView
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingTop="5dp">
+
+                <android.support.design.widget.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <android.support.design.widget.TextInputEditText
+                        android:id="@+id/add_book_isbn_edit"
+                        android:layout_width="300dp"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="start"
+                        android:hint="@string/hint_isbn"
+                        android:inputType="numberDecimal"
+                        android:paddingLeft="4dp"
+                        android:paddingStart="4dp" />
+                </android.support.design.widget.TextInputLayout>
+
+                <ImageButton
+                    android:id="@+id/add_book_barcode_scan"
+                    android:layout_width="44dp"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:layout_marginLeft="300dp"
+                    android:layout_marginStart="300dp"
+                    android:layout_marginTop="6dp"
+                    android:src="@drawable/ic_photo_camera_white_24dp"
+                    android:tint="@color/colorPrimary" />
+            </RelativeLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:layout_marginTop="6dp">
 
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:paddingTop="5dp">
+                <Switch
+                    android:id="@+id/add_book_autofill"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:checked="false"
+                    android:gravity="start"
+                    android:text="@string/auto_fill" />
+            </LinearLayout>
 
-                    <android.support.design.widget.TextInputLayout
-                        android:id="@+id/ab_isbn"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        app:counterMaxLength="13">
-
-                        <EditText
-                            android:id="@+id/ab_edit_isbn"
-                            android:layout_width="300dp"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="left"
-                            android:paddingLeft="4dp"
-                            android:hint="@string/hint_isbn"
-                            android:inputType="textNoSuggestions"
-                            android:maxLength="13" />
-                    </android.support.design.widget.TextInputLayout>
-
-                    <ImageView
-                        android:layout_width="44dp"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentLeft="true"
-                        android:layout_marginTop="6dp"
-                        android:layout_marginLeft="300dp"
-                        android:layout_centerVertical="true"
-                        android:contentDescription="@string/hint_username"
-                        android:src="@drawable/ic_photo_camera_white_24dp"
-                        android:tint="@color/colorPrimary" />
-
-                </RelativeLayout>
-                <!--View
-                    android:layout_width="match_parent"
-                    android:layout_height="2dp"
-                    android:layout_marginTop="16dp"
-                    android:background="@color/colorPrimary"/-->
+            <ViewSwitcher xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/add_book_view_switcher"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:measureAllChildren="false">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp">
-                    <Button
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:id="@+id/ab_fill_isbn"
-                        android:text="@string/auto_fill"
-                        />
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="horizontal"
-                    android:paddingTop="5dp">
+                    android:orientation="vertical">
 
                     <android.support.design.widget.TextInputLayout
-                        android:id="@+id/ab_title"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:paddingTop="5dp">
 
-                        app:counterMaxLength="13">
-
-                        <EditText
-                            android:id="@+id/ab_edit_title"
+                        <android.support.design.widget.TextInputEditText
+                            android:id="@+id/add_book_title_edit"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:hint="@string/hint_title"
-                            android:inputType="textNoSuggestions"
-                            android:maxLength="@integer/max_length_username"
-                            android:nextFocusLeft="@id/ep_input_username"
-                            android:nextFocusUp="@id/ep_input_username" />
+                            android:inputType="text" />
 
                     </android.support.design.widget.TextInputLayout>
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="horizontal"
-                    android:paddingTop="5dp">
 
                     <android.support.design.widget.TextInputLayout
-                        android:id="@+id/ab_author"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        app:counterMaxLength="13">
+                        android:paddingTop="5dp">
 
-                        <EditText
-                            android:id="@+id/ab_edit_author"
+                        <android.support.design.widget.TextInputEditText
+                            android:id="@+id/add_book_author_edit"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:hint="@string/hint_author"
-                            android:inputType="textNoSuggestions"
-                            android:maxLength="@integer/max_length_username"
-                            android:nextFocusLeft="@id/ep_input_username"
-                            android:nextFocusUp="@id/ep_input_username" />
+                            android:inputType="text" />
 
                     </android.support.design.widget.TextInputLayout>
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="horizontal"
-                    android:paddingTop="5dp">
 
                     <android.support.design.widget.TextInputLayout
-                        android:id="@+id/ab_publisher"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        app:counterMaxLength="13">
+                        android:paddingTop="5dp">
 
-                        <EditText
-                            android:id="@+id/ab_edit_publisher"
+                        <android.support.design.widget.TextInputEditText
+                            android:id="@+id/add_book_publisher_edit"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:hint="@string/hint_publisher"
-                            android:inputType="textNoSuggestions"
-                            android:maxLength="@integer/max_length_username"
-                            android:nextFocusLeft="@id/ep_input_username"
-                            android:nextFocusUp="@id/ep_input_username" />
+                            android:inputType="text" />
 
                     </android.support.design.widget.TextInputLayout>
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="horizontal"
-                    android:paddingTop="5dp">
 
                     <android.support.design.widget.TextInputLayout
-                        android:id="@+id/ab_editionYear"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        app:counterMaxLength="13">
+                        android:paddingTop="5dp">
 
-                        <EditText
-                            android:id="@+id/ab_edit_editionYear"
-                            android:layout_height="wrap_content"
+                        <android.support.design.widget.TextInputEditText
+                            android:id="@+id/add_book_edition_year_edit"
                             android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
                             android:hint="@string/hint_editionYear"
-                            android:inputType="numberDecimal"
-                            android:maxLength="@integer/max_length_username"
-                            android:nextFocusLeft="@id/ep_input_username"
-                            android:nextFocusUp="@id/ep_input_username"
-                            />
+                            android:inputType="numberDecimal" />
 
                     </android.support.design.widget.TextInputLayout>
                 </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="horizontal"
-                    android:paddingTop="5dp">
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
 
-                    <android.support.design.widget.TextInputLayout
-                        android:id="@+id/ab_condition"
+                    <Button
+                        android:id="@+id/add_book_start_query"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:enabled="false"
+                        android:text="@string/add_book_search_isbn" />
+
+                    <LinearLayout
+                        android:id="@+id/add_book_autofilled_info_wrapper"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        app:counterMaxLength="13">
+                        android:orientation="vertical"
+                        android:visibility="gone">
 
-                        <EditText
-                            android:id="@+id/ab_edit_condition"
-                            android:layout_width="match_parent"
+                        <TextView
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:hint="@string/hint_condition"
-                            android:inputType="textNoSuggestions"
-                            android:maxLength="@integer/max_length_username"
-                            android:nextFocusLeft="@id/ep_input_username"
-                            android:nextFocusUp="@id/ep_input_username" />
+                            android:text="@string/book_title"
+                            android:textColor="@color/colorTextAccent" />
 
-                    </android.support.design.widget.TextInputLayout>
+                        <TextView
+                            android:id="@+id/add_book_title_view"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/book_author"
+                            android:textColor="@color/colorTextAccent" />
+
+                        <TextView
+                            android:id="@+id/add_book_author_view"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/book_publisher"
+                            android:textColor="@color/colorTextAccent" />
+
+                        <TextView
+                            android:id="@+id/add_book_publisher_view"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/book_edition_year"
+                            android:textColor="@color/colorTextAccent" />
+
+                        <TextView
+                            android:id="@+id/add_book_edition_year_view"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" />
+                    </LinearLayout>
                 </LinearLayout>
-            </LinearLayout>
-        </ScrollView>
-    </LinearLayout>
+            </ViewSwitcher>
 
+            <android.support.design.widget.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="5dp">
 
-
+                <android.support.design.widget.TextInputEditText
+                    android:id="@+id/add_book_condition_edit"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/hint_condition"
+                    android:inputType="text" />
+            </android.support.design.widget.TextInputLayout>
+        </LinearLayout>
+    </ScrollView>
 </FrameLayout>
