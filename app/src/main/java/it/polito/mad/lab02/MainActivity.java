@@ -3,6 +3,7 @@ package it.polito.mad.lab02;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.StringRes;
@@ -19,6 +20,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
+import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.signature.ObjectKey;
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.ErrorCodes;
 import com.firebase.ui.auth.IdpResponse;
@@ -29,6 +33,8 @@ import java.util.Arrays;
 
 import it.polito.mad.lab02.data.UserProfile;
 import it.polito.mad.lab02.utils.AppCompatActivityDialog;
+import it.polito.mad.lab02.utils.GlideApp;
+import it.polito.mad.lab02.utils.GlideRequest;
 import it.polito.mad.lab02.utils.Utilities;
 
 public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
@@ -185,6 +191,7 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
             case RC_EDIT_PROFILE:
                 if (resultCode == RESULT_OK) {
                     localProfile = (UserProfile) data.getSerializableExtra(UserProfile.PROFILE_INFO_KEY);
+                    updateNavigationView(); // Need to update the drawer information
                     this.replaceFragment(ShowProfileFragment.newInstance(localProfile));
                 }
                 break;
@@ -215,6 +222,23 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
             username.setText(localProfile.getUsername());
             email.setVisibility(View.VISIBLE);
             email.setText(localProfile.getEmail());
+            if (localProfile.hasProfilePicture()) {
+                GlideRequest<Drawable> thumbnail = GlideApp
+                        .with(this)
+                        .load(localProfile.getProfilePictureThumbnail())
+                        .apply(RequestOptions.circleCropTransform());
+
+                GlideApp.with(this)
+                        .load(localProfile.getProfilePictureReference())
+                        .signature(new ObjectKey(localProfile.getProfilePictureLastModified()))
+                        .thumbnail(thumbnail)
+                        .fallback(R.drawable.default_header)
+                        .transition(DrawableTransitionOptions.withCrossFade())
+                        .apply(RequestOptions.circleCropTransform())
+                        .into(profilePicture);
+            } else {
+                profilePicture.setImageResource(R.mipmap.ic_drawer_picture_round);
+            }
             drawer.inflateMenu(R.menu.activity_main_drawer_signed_in);
         } else {
             //TODO: reset the profile picture
@@ -222,6 +246,7 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
             email.setVisibility(View.INVISIBLE);
             email.setText("");
             drawer.inflateMenu(R.menu.activity_main_drawer);
+            profilePicture.setImageResource(R.mipmap.ic_drawer_picture_round);
         }
 
         drawer.getMenu().getItem(0).setChecked(true);
