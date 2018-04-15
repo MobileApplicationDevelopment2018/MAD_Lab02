@@ -242,6 +242,13 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
                 .into(profilePicture);
 
         drawer.getMenu().getItem(0).setChecked(true);
+        drawer.getHeaderView(0)
+                .findViewById(R.id.nh_profile_picture)
+                .setOnClickListener(v -> {
+                    DrawerLayout dr = findViewById(R.id.drawer_layout);
+                    replaceFragment(ShowProfileFragment.newInstance(localProfile));
+                    dr.closeDrawer(GravityCompat.START);
+                });
     }
 
     private void signIn() {
