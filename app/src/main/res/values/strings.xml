@@ -87,4 +87,7 @@
     <string name="scan_barcode">Scan barcode</string>
     <string name="saving_data">Saving your personal data. Please wait...</string>
     <string name="code_retrieved">Code Retrieved:</string>
+
+    <string name="facebook_application_id" translatable="false">417996611977813</string>
+    <string name="facebook_login_protocol_scheme" translatable="false">fb417996611977813</string>
 </resources>

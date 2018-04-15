@@ -80,15 +80,15 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_add_book, container, false);
-        Switch autofill = view.findViewById(R.id.add_book_autofill);
+        Switch autofill = view.findViewById(R.id.ab_autofill);
         autofill.setOnClickListener((view1) -> {
-            ViewSwitcher switcher = view.findViewById(R.id.add_book_view_switcher);
+            ViewSwitcher switcher = view.findViewById(R.id.ab_view_switcher);
             switcher.showNext();
         });
 
-        ImageButton scanBarcodeBtn = view.findViewById(R.id.add_book_barcode_scan);
-        Button startQueryBtn = view.findViewById(R.id.add_book_start_query);
-        EditText isbnEdit = view.findViewById(R.id.add_book_isbn_edit);
+        ImageButton scanBarcodeBtn = view.findViewById(R.id.ab_barcode_scan);
+        Button startQueryBtn = view.findViewById(R.id.ab_start_query);
+        EditText isbnEdit = view.findViewById(R.id.ab_isbn_edit);
 
         scanBarcodeBtn.setOnClickListener((view3) -> {
             // launch barcode activity.
@@ -167,7 +167,7 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
         }
         isTaskRunning = false;
         if (result != null) {
-            LinearLayout wrapper = getView().findViewById(R.id.add_book_autofilled_info_wrapper);
+            LinearLayout wrapper = getView().findViewById(R.id.ab_autofilled_info_wrapper);
             //TODO: fill textviews with desirialized JSON
             wrapper.setVisibility(View.VISIBLE);
         }
@@ -229,7 +229,7 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
             if (resultCode == CommonStatusCodes.SUCCESS) {
                 if (data != null) {
                     Barcode barcode = data.getParcelableExtra(BarcodeCaptureActivity.BarcodeObject);
-                    ((EditText) getView().findViewById(R.id.add_book_isbn_edit)).setText(barcode.displayValue);
+                    ((EditText) getView().findViewById(R.id.ab_isbn_edit)).setText(barcode.displayValue);
                 }
             } else {
                 Toast.makeText(this.getContext(), String.format(getString(R.string.barcode_error), CommonStatusCodes.getStatusCodeString(resultCode)), Toast.LENGTH_SHORT);
