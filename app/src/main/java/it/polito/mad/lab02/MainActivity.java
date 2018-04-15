@@ -3,7 +3,6 @@ package it.polito.mad.lab02;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.StringRes;
@@ -84,11 +83,10 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
+        if (drawer.isDrawerOpen(GravityCompat.START))
             drawer.closeDrawer(GravityCompat.START);
-        } else {
+        else
             super.onBackPressed();
-        }
     }
 
     @Override
@@ -322,7 +320,7 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
     }
 
     @Override
-    public void onFragmentInteraction(Uri uri) {
+    public void onFragmentInteraction() {
 
     }
 

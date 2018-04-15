@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">MAD Laboratorio 1</string>
+    <string name="app_name">MAD Laboratorio 2</string>
     <string name="show_profile">Mostra Profilo</string>
     <string name="edit_profile">Modifica Profilo</string>
     <string name="save_profile">Salva Profilo</string>
@@ -33,4 +33,43 @@
     <string name="failed_obtain_picture">Si è verificato un errore durante l\'ottenimento dell\'immagine</string>
 
     <string name="number_zero">0</string>
+    <string name="activity_main">Home</string>
+    <string name="add_book">Aggiungi Libro</string>
+    <string name="anonymous">Non ancora loggato</string>
+    <string name="auto_fill">Auto-Fill</string>
+    <string name="complete_profile">Controlla e completa le tue informazioni se vuoi</string>
+    <string name="explore">Esplora</string>
+    <string name="failed_load_data">Qualcosa è andato storto nel recupero delle tue informazioni. Verrai scollegato.</string>
+    <string name="failed_save_data">Qualcosa è andato storto nel salvataggio dei tuoi dati</string>
+    <string name="fui_name_hint">Nome utente</string>
+    <string name="hint_author">Autore</string>
+    <string name="hint_condition">Condizioni del libro</string>
+    <string name="hint_editionYear">Anno Pubblicazione</string>
+    <string name="hint_isbn">ISBN</string>
+    <string name="hint_publisher">Casa Editrice</string>
+    <string name="hint_title">Titolo</string>
+    <string name="profile">Il tuo profilo</string>
+    <string name="saving_data">Salvataggio dei tuoi dati in corso. Attendere...</string>
+    <string name="sign_in">Accedi</string>
+    <string name="sign_in_cancelled">Accesso cancellato</string>
+    <string name="sign_in_no_internet_connection">Accesso fallito. Controlla la tua connessione</string>
+    <string name="sign_in_unknown_error">Si è verificato un errore durante l\'accesso</string>
+    <string name="sign_in_welcome">Benvenuto</string>
+    <string name="sign_in_welcome_back">Bentornato</string>
+    <string name="sign_out">Disconnetti</string>
+    <string name="sign_out_failed">Disconnessione fallita</string>
+    <string name="sign_out_succeeded">Disconnesso</string>
+    <string name="success_save_data">Profilo aggiornato correttamente</string>
+    <string name="code_retrieved">Codice Letto:</string>
+    <string name="add_book_search_isbn">Cerca ISBN</string>
+    <string name="book_author">Autore</string>
+    <string name="book_title">Titolo</string>
+    <string name="book_publisher">Editore</string>
+    <string name="book_edition_year">Anno Pubblicazione</string>
+    <string name="permission_camera_rationale">Sono necessari i permessi per la fotocamera</string>
+    <string name="no_camera_permission">L\'applcazione non può essere lanciata perchè non ha i permessi per la fotocamera.</string>
+    <string name="barcode_success">Codice a barre letto con successo</string>
+    <string name="barcode_failure">Nessun codice a barre rilevato</string>
+    <string name="barcode_error">Errore nella lettura del codice a barre: %1$s</string>
+    <string name="scan_barcode">Scansiona codice a barre</string>
 </resources>
