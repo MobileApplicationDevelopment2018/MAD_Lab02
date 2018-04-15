@@ -12,11 +12,13 @@ public abstract class AppCompatActivityDialog<E extends Enum<E>> extends AppComp
 
     private Dialog dialogInstance;
     private E dialogId;
+    private boolean dialogPersist;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        this.dialogPersist = false;
         if (savedInstanceState != null) {
             @SuppressWarnings("unchecked")
             E dialogId = (E) savedInstanceState.getSerializable(CURRENT_DIALOG_ID_KEY);
@@ -24,7 +26,7 @@ public abstract class AppCompatActivityDialog<E extends Enum<E>> extends AppComp
         }
 
         if (dialogId != null) {
-            this.openDialog(dialogId);
+            this.openDialog(dialogId, true);
         }
     }
 
@@ -38,15 +40,17 @@ public abstract class AppCompatActivityDialog<E extends Enum<E>> extends AppComp
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
-        if (dialogId != null && dialogInstance != null && dialogInstance.isShowing()) {
+        if (dialogPersist && dialogId != null &&
+                dialogInstance != null && dialogInstance.isShowing()) {
             outState.putSerializable(CURRENT_DIALOG_ID_KEY, dialogId);
         }
     }
 
     @CallSuper
-    protected void openDialog(@NonNull E dialogId) {
-        closeDialog();
+    protected void openDialog(@NonNull E dialogId, boolean dialogPersist) {
+        this.closeDialog();
         this.dialogId = dialogId;
+        this.dialogPersist = dialogPersist;
     }
 
     protected final void setDialogInstance(@NonNull Dialog dialogInstance) {
@@ -54,10 +58,11 @@ public abstract class AppCompatActivityDialog<E extends Enum<E>> extends AppComp
     }
 
     protected final void closeDialog() {
-        if (dialogInstance != null && dialogInstance.isShowing()) {
-            dialogInstance.dismiss();
+        if (this.dialogInstance != null && this.dialogInstance.isShowing()) {
+            this.dialogInstance.dismiss();
         }
-        dialogId = null;
-        dialogInstance = null;
+        this.dialogId = null;
+        this.dialogInstance = null;
+        this.dialogPersist = false;
     }
 }

@@ -23,14 +23,13 @@ import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.ErrorCodes;
 import com.firebase.ui.auth.IdpResponse;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.Arrays;
 
 import it.polito.mad.lab02.data.UserProfile;
 import it.polito.mad.lab02.utils.AppCompatActivityDialog;
 import it.polito.mad.lab02.utils.Utilities;
-
-//TODO: check loading problem
 
 public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
         implements NavigationView.OnNavigationItemSelectedListener,
@@ -40,8 +39,9 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
     private static final int RC_EDIT_PROFILE = 5;
     private static final int RC_EDIT_PROFILE_WELCOME = 6;
 
-    private FirebaseAuth mAuth;
+    private FirebaseAuth firebaseAuth;
     private UserProfile localProfile;
+    private ValueEventListener profileListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,7 +56,7 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
-        mAuth = FirebaseAuth.getInstance();
+        firebaseAuth = FirebaseAuth.getInstance();
 
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
@@ -69,14 +69,29 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
         // Profile to be obtained from database
         if (localProfile == null) {
             localProfile = new UserProfile();
-            if (mAuth.getCurrentUser() != null) {
-                loadProfileFromFirebase();
-            }
         }
 
         updateNavigationView();
         if (savedInstanceState == null) {
             showDefaultFragment();
+        }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        if (localProfile.isAnonymous() && firebaseAuth.getCurrentUser() != null) {
+            loadProfileFromFirebase();
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        if (this.profileListener != null) {
+            UserProfile.unsetOnProfileLoadedListener(this.profileListener);
         }
     }
 
@@ -147,7 +162,7 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
                 IdpResponse response = IdpResponse.fromResultIntent(data);
 
                 // Successfully signed in
-                if (resultCode == RESULT_OK && mAuth.getCurrentUser() != null) {
+                if (resultCode == RESULT_OK && firebaseAuth.getCurrentUser() != null) {
                     loadProfileFromFirebase();
                     return;
                 }
@@ -225,8 +240,8 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
     private void signOut() {
         AuthUI.getInstance()
                 .signOut(this)
-                .addOnSuccessListener(t -> onSignOut())
-                .addOnFailureListener(t -> showToast(R.string.sign_out_failed));
+                .addOnSuccessListener(this, t -> onSignOut())
+                .addOnFailureListener(this, t -> showToast(R.string.sign_out_failed));
     }
 
     private void onSignOut() {
@@ -245,9 +260,10 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
     }
 
     private void loadProfileFromFirebase() {
-        this.openDialog(DialogID.DIALOG_LOADING);
+        this.openDialog(DialogID.DIALOG_LOADING, false);
 
-        UserProfile.loadFromFirebase(data -> {
+        this.profileListener = UserProfile.setOnProfileLoadedListener(data -> {
+            this.profileListener = null;
             closeDialog();
 
             if (data == null) {
@@ -255,21 +271,19 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
             } else {
                 localProfile = new UserProfile(data, this.getResources());
                 updateNavigationView();
-                showToast(
-                        getString(R.string.sign_in_welcome_back) + " " +
-                                localProfile.getUsername());
+                showToast(getString(R.string.sign_in_welcome_back) + " " + localProfile.getUsername());
             }
 
         }, error -> {
-            openDialog(DialogID.DIALOG_ERROR_RETRIEVE_DIALOG);
+            openDialog(DialogID.DIALOG_ERROR_RETRIEVE_DIALOG, true);
             signOut();
         });
     }
 
     private void completeRegistration() {
 
-        assert mAuth.getCurrentUser() != null;
-        localProfile = new UserProfile(mAuth.getCurrentUser(), this.getResources());
+        assert firebaseAuth.getCurrentUser() != null;
+        localProfile = new UserProfile(firebaseAuth.getCurrentUser(), this.getResources());
         localProfile.saveToFirebase(this.getResources());
 
         String message = getString(R.string.sign_in_welcome) + " " + localProfile.getUsername();
@@ -300,8 +314,8 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
     }
 
     @Override
-    protected void openDialog(@NonNull DialogID dialogId) {
-        super.openDialog(dialogId);
+    protected void openDialog(@NonNull DialogID dialogId, boolean dialogPersist) {
+        super.openDialog(dialogId, dialogPersist);
 
         Dialog dialog = null;
         switch (dialogId) {

@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -41,6 +42,7 @@ import it.polito.mad.lab02.data.UserProfile;
 import it.polito.mad.lab02.utils.AppCompatActivityDialog;
 import it.polito.mad.lab02.utils.GlideApp;
 import it.polito.mad.lab02.utils.GlideRequest;
+import it.polito.mad.lab02.utils.PictureUtilities;
 import it.polito.mad.lab02.utils.TextWatcherUtilities;
 import it.polito.mad.lab02.utils.Utilities;
 
@@ -48,6 +50,7 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
 
     private static final String ORIGINAL_PROFILE_KEY = "original_profile";
     private static final String CURRENT_PROFILE_KEY = "current_profile";
+    private static final String IS_COMMITTING_KEY = "isCommitting";
     private static final String IMAGE_PATH_TMP = "profile_picture_tmp";
 
     private static final int CAMERA = 2;
@@ -56,6 +59,9 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
 
     private EditText username, location, biography;
     private UserProfile originalProfile, currentProfile;
+
+    private boolean isCommitting;
+    private AsyncTask<Void, Void, PictureUtilities.CompressedImage> pictureProcessingTask;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,15 +72,19 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
         location = findViewById(R.id.ep_input_location);
         biography = findViewById(R.id.ep_input_biography);
 
+        pictureProcessingTask = null;
+
         // Initialize the Profile instances
         if (savedInstanceState != null) {
             // If they was saved, load them
             originalProfile = (UserProfile) savedInstanceState.getSerializable(ORIGINAL_PROFILE_KEY);
             currentProfile = (UserProfile) savedInstanceState.getSerializable(CURRENT_PROFILE_KEY);
+            isCommitting = savedInstanceState.getBoolean(IS_COMMITTING_KEY, false);
         } else {
             // Otherwise, obtain them through the intent
             originalProfile = (UserProfile) this.getIntent().getSerializableExtra(UserProfile.PROFILE_INFO_KEY);
             currentProfile = new UserProfile(originalProfile);
+            isCommitting = false;
         }
 
         // Set the toolbar
@@ -89,7 +99,7 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
         fillViews(currentProfile);
 
         final FloatingActionButton floatingActionButton = findViewById(R.id.ep_camera_button);
-        floatingActionButton.setOnClickListener(v -> this.openDialog(DialogID.DIALOG_CHOOSE_PICTURE));
+        floatingActionButton.setOnClickListener(v -> this.openDialog(DialogID.DIALOG_CHOOSE_PICTURE, true));
 
         username.addTextChangedListener(
                 new TextWatcherUtilities.GenericTextWatcher(username, getString(R.string.invalid_username),
@@ -109,10 +119,26 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+
+        if (this.isCommitting) {
+            this.commitChanges();
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        if (this.isCommitting && this.pictureProcessingTask != null) {
+            this.pictureProcessingTask.cancel(true);
+        }
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
-
-        this.closeDialog();
 
         if (isFinishing() && currentProfile.getLocalImagePath() != null) {
             File tmpImageFile = new File(currentProfile.getLocalImagePath());
@@ -124,7 +150,7 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
     public void onBackPressed() {
         updateProfileInfo(currentProfile);
         if (currentProfile.profileUpdated(originalProfile)) {
-            openDialog(DialogID.DIALOG_CONFIRM_EXIT);
+            openDialog(DialogID.DIALOG_CONFIRM_EXIT, true);
         } else {
             finish();
         }
@@ -161,6 +187,7 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
         updateProfileInfo(currentProfile);
         outState.putSerializable(ORIGINAL_PROFILE_KEY, originalProfile);
         outState.putSerializable(CURRENT_PROFILE_KEY, currentProfile);
+        outState.putBoolean(IS_COMMITTING_KEY, isCommitting);
     }
 
     @Override
@@ -190,7 +217,7 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
                             Utilities.copyFile(new File(Utilities.getRealPathFromURI(this,
                                     data.getData())), imageFileGallery);
                         } catch (IOException e) {
-                            this.openDialog(DialogID.DIALOG_ERROR_FAILED_OBTAIN_PICTURE);
+                            this.openDialog(DialogID.DIALOG_ERROR_FAILED_OBTAIN_PICTURE, true);
                         }
 
                         currentProfile.setProfilePicture(imageFileGallery.getAbsolutePath());
@@ -250,24 +277,26 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
         updateProfileInfo(currentProfile);
 
         if (!currentProfile.isValid()) {
-            this.openDialog(DialogID.DIALOG_ERROR_INCORRECT_VALUES);
+            this.openDialog(DialogID.DIALOG_ERROR_INCORRECT_VALUES, true);
             return;
         }
 
         if (originalProfile == null || originalProfile.profileUpdated(currentProfile)) {
 
             OnSuccessListener<List<?>> onSuccess = t -> {
+                isCommitting = false;
                 Intent intent = new Intent(getApplicationContext(), ShowProfileFragment.class);
                 intent.putExtra(UserProfile.PROFILE_INFO_KEY, currentProfile);
                 setResult(RESULT_OK, intent);
                 finish();
             };
             OnFailureListener onFailure = t -> {
-                this.closeDialog();
-                this.openDialog(DialogID.DIALOG_ERROR_FAILED_SAVE_DATA);
+                isCommitting = false;
+                this.openDialog(DialogID.DIALOG_ERROR_FAILED_SAVE_DATA, true);
             };
 
-            this.openDialog(DialogID.DIALOG_SAVING);
+            this.isCommitting = true;
+            this.openDialog(DialogID.DIALOG_SAVING, false);
 
             // A new profile picture has to be uploaded: it is prepared in background
             // and then it is uploaded to firebase and the other changes are committed
@@ -285,8 +314,8 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
                     tasks.add(currentProfile.saveToFirebase(this.getResources()));
                     tasks.add(currentProfile.uploadProfilePictureToFirebase(picture.getPicture()));
                     Tasks.whenAllSuccess(tasks)
-                            .addOnSuccessListener(onSuccess)
-                            .addOnFailureListener(onFailure);
+                            .addOnSuccessListener(this, onSuccess)
+                            .addOnFailureListener(this, onFailure);
 
                 });
             }
@@ -299,8 +328,8 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
                     tasks.add(currentProfile.deleteProfilePictureFromFirebase());
                 }
                 Tasks.whenAllSuccess(tasks)
-                        .addOnSuccessListener(onSuccess)
-                        .addOnFailureListener(onFailure);
+                        .addOnSuccessListener(this, onSuccess)
+                        .addOnFailureListener(this, onFailure);
             }
 
         } else {
@@ -344,8 +373,8 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
     }
 
     @Override
-    protected void openDialog(@NonNull DialogID dialogId) {
-        super.openDialog(dialogId);
+    protected void openDialog(@NonNull DialogID dialogId, boolean dialogPersist) {
+        super.openDialog(dialogId, dialogPersist);
 
         Dialog dialogInstance = null;
         switch (dialogId) {
