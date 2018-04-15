@@ -1,6 +1,7 @@
 package it.polito.mad.lab02;
 
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -16,12 +17,14 @@ import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.TextView;
 
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.bumptech.glide.signature.ObjectKey;
 
 import java.util.Locale;
 
 import it.polito.mad.lab02.data.UserProfile;
 import it.polito.mad.lab02.utils.GlideApp;
+import it.polito.mad.lab02.utils.GlideRequest;
 
 public class ShowProfileFragment extends Fragment {
 
@@ -105,12 +108,18 @@ public class ShowProfileFragment extends Fragment {
         location.setText(profile.getLocation());
         biography.setText(profile.getBiography());
 
-        // TODO: check placeholder
+        GlideRequest<Drawable> thumbnail = GlideApp
+                .with(this)
+                .load(profile.getProfilePictureThumbnail())
+                .centerCrop();
+
         GlideApp.with(this)
                 .load(profile.getProfilePictureReference())
-                .centerCrop()
-                .placeholder(R.drawable.default_header)
                 .signature(new ObjectKey(profile.getProfilePictureLastModified()))
+                .thumbnail(thumbnail)
+                .fallback(R.drawable.default_header)
+                .transition(DrawableTransitionOptions.withCrossFade())
+                .centerCrop()
                 .into(imageView);
 
         rating.setRating(profile.getRating());

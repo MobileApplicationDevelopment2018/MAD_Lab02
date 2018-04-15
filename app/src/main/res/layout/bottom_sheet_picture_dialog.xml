@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -29,7 +28,7 @@
             android:layout_gravity="center"
             android:layout_marginStart="16dp"
             android:layout_marginLeft="16dp"
-            android:text="@string/camera_option"/>
+            android:text="@string/camera_option" />
 
     </LinearLayout>
 
@@ -47,7 +46,7 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:tint="@color/colorGrey"
-            android:src="@drawable/ic_image_black_24dp"/>
+            android:src="@drawable/ic_image_black_24dp" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -55,7 +54,7 @@
             android:layout_gravity="center"
             android:layout_marginStart="16dp"
             android:layout_marginLeft="16dp"
-            android:text="@string/gallery_option"/>
+            android:text="@string/gallery_option" />
 
     </LinearLayout>
 
@@ -73,7 +72,7 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:tint="@color/colorGrey"
-            android:src="@drawable/ic_restore_black_24dp"/>
+            android:src="@drawable/ic_restore_black_24dp" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -81,7 +80,7 @@
             android:layout_gravity="center"
             android:layout_marginStart="16dp"
             android:layout_marginLeft="16dp"
-            android:text="@string/reset_option"/>
+            android:text="@string/reset_option" />
 
     </LinearLayout>
 

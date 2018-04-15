@@ -41,8 +41,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="4"
                 android:contentDescription="@string/profile_picture"
-                android:scaleType="centerCrop"
-                android:src="@drawable/default_header" />
+                android:scaleType="centerCrop" />
 
             <ScrollView
                 android:layout_width="0dp"

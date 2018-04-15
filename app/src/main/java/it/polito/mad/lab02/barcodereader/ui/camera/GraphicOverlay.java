@@ -93,6 +93,7 @@ public class GraphicOverlay<T extends GraphicOverlay.Graphic> extends View {
      *
      * @return list of all active graphics.
      */
+    @SuppressWarnings("unchecked")
     public List<T> getGraphics() {
         synchronized (mLock) {
             return new Vector(mGraphics);
