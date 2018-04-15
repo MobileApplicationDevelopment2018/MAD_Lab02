@@ -2,6 +2,7 @@ package it.polito.mad.lab02.data;
 
 import android.content.res.Resources;
 import android.support.annotation.NonNull;
+import android.util.Base64;
 import android.util.Patterns;
 
 import com.google.android.gms.tasks.Task;
@@ -35,6 +36,7 @@ public class UserProfile implements Serializable {
     private static final String FIREBASE_STORAGE_IMAGE_NAME = "profile";
 
     private static final int PROFILE_PICTURE_SIZE = 1024;
+    private static final int PROFILE_PICTURE_THUMBNAIL_SIZE = 128;
     private static final int PROFILE_PICTURE_QUALITY = 50;
 
     private final Data data;
@@ -81,7 +83,8 @@ public class UserProfile implements Serializable {
         return email.substring(0, email.indexOf('@'));
     }
 
-    public static void loadFromFirebase(@NonNull OnDataLoadSuccess onSuccess, @NonNull OnDataLoadFailure onFailure) {
+    public static void loadFromFirebase(@NonNull OnDataLoadSuccess onSuccess,
+                                        @NonNull OnDataLoadFailure onFailure) {
 
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         assert currentUser != null;
@@ -106,6 +109,7 @@ public class UserProfile implements Serializable {
     public void setProfilePicture(String path) {
         this.data.profile.hasProfilePicture = path != null;
         this.data.profile.profilePictureLastModified = System.currentTimeMillis();
+        this.data.profile.profilePictureThumbnail = null;
         localImagePath = path;
     }
 
@@ -141,7 +145,7 @@ public class UserProfile implements Serializable {
         return this.data.profile.biography;
     }
 
-    private boolean hasProfilePicture() {
+    public boolean hasProfilePicture() {
         return this.data.profile.hasProfilePicture;
     }
 
@@ -155,6 +159,17 @@ public class UserProfile implements Serializable {
                 ? this.getProfilePictureReferenceFirebase()
                 : null
                 : this.getLocalImagePath();
+    }
+
+    public byte[] getProfilePictureThumbnail() {
+        return this.data.profile.profilePictureThumbnail == null
+                ? null
+                : Base64.decode(this.data.profile.profilePictureThumbnail, Base64.DEFAULT);
+    }
+
+    public void setProfilePictureThumbnail(ByteArrayOutputStream thumbnail) {
+        this.data.profile.profilePictureThumbnail =
+                Base64.encodeToString(thumbnail.toByteArray(), Base64.DEFAULT);
     }
 
     private StorageReference getProfilePictureReferenceFirebase() {
@@ -231,27 +246,28 @@ public class UserProfile implements Serializable {
                 .setValue(this.data.profile);
     }
 
-    public Task<?> saveProfilePictureToFirebase() {
-        if (hasProfilePicture() && localImagePath != null) {
-
-            // TODO: check if it is necessary to do this in a worker thread
-            ByteArrayOutputStream out = PictureUtilities.compressImage(localImagePath, PROFILE_PICTURE_SIZE, PROFILE_PICTURE_SIZE, PROFILE_PICTURE_QUALITY);
-            if (out != null) {
-
-                StorageMetadata metadata = new StorageMetadata.Builder()
-                        .setContentType("image/webp")
-                        .build();
-
-                return getProfilePictureReferenceFirebase()
-                        .putBytes(out.toByteArray(), metadata)
-                        .addOnSuccessListener(t ->
-                                this.localImagePath = null);
-            }
-        }
-
+    public Task<Void> deleteProfilePictureFromFirebase() {
         return getProfilePictureReferenceFirebase()
                 .delete();
+    }
 
+    public void processProfilePictureAsync(
+            @NonNull PictureUtilities.CompressImageAsync.OnCompleteListener onCompleteListener) {
+
+        new PictureUtilities.CompressImageAsync(
+                localImagePath, PROFILE_PICTURE_SIZE, PROFILE_PICTURE_THUMBNAIL_SIZE,
+                PROFILE_PICTURE_QUALITY, onCompleteListener)
+                .execute();
+    }
+
+    public Task<?> uploadProfilePictureToFirebase(@NonNull ByteArrayOutputStream picture) {
+        StorageMetadata metadata = new StorageMetadata.Builder()
+                .setContentType(PictureUtilities.IMAGE_CONTENT_TYPE_UPLOAD)
+                .build();
+
+        return getProfilePictureReferenceFirebase()
+                .putBytes(picture.toByteArray(), metadata)
+                .addOnSuccessListener(t -> this.localImagePath = null);
     }
 
     public interface OnDataLoadSuccess {
@@ -288,6 +304,7 @@ public class UserProfile implements Serializable {
             public String biography;
             public boolean hasProfilePicture;
             public long profilePictureLastModified;
+            public String profilePictureThumbnail;
 
             public Profile() {
                 this.email = null;
@@ -296,6 +313,7 @@ public class UserProfile implements Serializable {
                 this.biography = null;
                 this.hasProfilePicture = false;
                 this.profilePictureLastModified = 0;
+                this.profilePictureThumbnail = null;
             }
 
             public Profile(@NonNull Profile other) {
@@ -305,6 +323,7 @@ public class UserProfile implements Serializable {
                 this.biography = other.biography;
                 this.hasProfilePicture = other.hasProfilePicture;
                 this.profilePictureLastModified = other.profilePictureLastModified;
+                this.profilePictureThumbnail = other.profilePictureThumbnail;
             }
         }
 

@@ -31,6 +31,8 @@ import it.polito.mad.lab02.data.UserProfile;
 import it.polito.mad.lab02.utils.AppCompatActivityDialog;
 import it.polito.mad.lab02.utils.Utilities;
 
+//TODO: check loading problem
+
 public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
         implements NavigationView.OnNavigationItemSelectedListener,
         AddBookFragment.OnFragmentInteractionListener {
@@ -248,18 +250,20 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
         this.openDialog(DialogID.DIALOG_LOADING);
 
         UserProfile.loadFromFirebase(data -> {
-            this.closeDialog();
+            closeDialog();
 
             if (data == null) {
                 completeRegistration();
             } else {
                 localProfile = new UserProfile(data, this.getResources());
                 updateNavigationView();
-                showToast(getString(R.string.sign_in_welcome_back) + " " + localProfile.getUsername());
+                showToast(
+                        getString(R.string.sign_in_welcome_back) + " " +
+                                localProfile.getUsername());
             }
 
         }, error -> {
-            this.openDialog(DialogID.DIALOG_ERROR_RETRIEVE_DIALOG);
+            openDialog(DialogID.DIALOG_ERROR_RETRIEVE_DIALOG);
             signOut();
         });
     }
@@ -304,11 +308,12 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
         Dialog dialog = null;
         switch (dialogId) {
             case DIALOG_LOADING:
-                dialog = ProgressDialog.show(this, "",
+                dialog = ProgressDialog.show(this, null,
                         getString(R.string.fui_progress_dialog_loading), true);
                 break;
             case DIALOG_ERROR_RETRIEVE_DIALOG:
                 dialog = Utilities.openErrorDialog(this, R.string.failed_load_data);
+                break;
         }
 
         if (dialog != null) {
@@ -323,6 +328,6 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
 
     public enum DialogID {
         DIALOG_LOADING,
-        DIALOG_ERROR_RETRIEVE_DIALOG;
+        DIALOG_ERROR_RETRIEVE_DIALOG,
     }
 }

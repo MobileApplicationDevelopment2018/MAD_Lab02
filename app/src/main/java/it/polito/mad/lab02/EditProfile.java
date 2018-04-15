@@ -5,6 +5,7 @@ import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -24,7 +25,10 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.bumptech.glide.signature.ObjectKey;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 
@@ -36,6 +40,7 @@ import java.util.List;
 import it.polito.mad.lab02.data.UserProfile;
 import it.polito.mad.lab02.utils.AppCompatActivityDialog;
 import it.polito.mad.lab02.utils.GlideApp;
+import it.polito.mad.lab02.utils.GlideRequest;
 import it.polito.mad.lab02.utils.TextWatcherUtilities;
 import it.polito.mad.lab02.utils.Utilities;
 
@@ -98,7 +103,8 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
                         string -> Utilities.isValidLocation(string)));
 
         if (savedInstanceState == null && originalProfile == null) {
-            Toast.makeText(this, R.string.complete_profile, Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.complete_profile,
+                    Toast.LENGTH_LONG).show();
         }
     }
 
@@ -181,7 +187,8 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
                         File imageFileGallery = new File(this.getApplicationContext()
                                 .getExternalFilesDir(Environment.DIRECTORY_PICTURES), IMAGE_PATH_TMP);
                         try {
-                            Utilities.copyFile(new File(Utilities.getRealPathFromURI(this, data.getData())), imageFileGallery);
+                            Utilities.copyFile(new File(Utilities.getRealPathFromURI(this,
+                                    data.getData())), imageFileGallery);
                         } catch (IOException e) {
                             this.openDialog(DialogID.DIALOG_ERROR_FAILED_OBTAIN_PICTURE);
                         }
@@ -199,7 +206,8 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[],
+                                           @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode) {
 
@@ -228,8 +236,10 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (cameraIntent.resolveActivity(getPackageManager()) != null) {
 
-            File imageFile = new File(this.getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES), IMAGE_PATH_TMP);
-            Uri imageUri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID.concat(".fileprovider"), imageFile);
+            File imageFile = new File(this.getApplicationContext()
+                    .getExternalFilesDir(Environment.DIRECTORY_PICTURES), IMAGE_PATH_TMP);
+            Uri imageUri = FileProvider.getUriForFile(this,
+                    BuildConfig.APPLICATION_ID.concat(".fileprovider"), imageFile);
 
             cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
             startActivityForResult(cameraIntent, CAMERA);
@@ -246,26 +256,52 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
 
         if (originalProfile == null || originalProfile.profileUpdated(currentProfile)) {
 
-            this.openDialog(DialogID.DIALOG_SAVING);
-            List<Task<?>> tasks = new ArrayList<>();
+            OnSuccessListener<List<?>> onSuccess = t -> {
+                Intent intent = new Intent(getApplicationContext(), ShowProfileFragment.class);
+                intent.putExtra(UserProfile.PROFILE_INFO_KEY, currentProfile);
+                setResult(RESULT_OK, intent);
+                finish();
+            };
+            OnFailureListener onFailure = t -> {
+                this.closeDialog();
+                this.openDialog(DialogID.DIALOG_ERROR_FAILED_SAVE_DATA);
+            };
 
-            tasks.add(currentProfile.saveToFirebase(this.getResources()));
-            if (currentProfile.imageUpdated(originalProfile)) {
-                tasks.add(currentProfile.saveProfilePictureToFirebase());
+            this.openDialog(DialogID.DIALOG_SAVING);
+
+            // A new profile picture has to be uploaded: it is prepared in background
+            // and then it is uploaded to firebase and the other changes are committed
+            if (currentProfile.imageUpdated(originalProfile) && currentProfile.hasProfilePicture()) {
+                currentProfile.processProfilePictureAsync(picture -> {
+
+                    if (picture == null) {
+                        onFailure.onFailure(new Exception());
+                        return;
+                    }
+
+                    currentProfile.setProfilePictureThumbnail(picture.getThumbnail());
+
+                    List<Task<?>> tasks = new ArrayList<>();
+                    tasks.add(currentProfile.saveToFirebase(this.getResources()));
+                    tasks.add(currentProfile.uploadProfilePictureToFirebase(picture.getPicture()));
+                    Tasks.whenAllSuccess(tasks)
+                            .addOnSuccessListener(onSuccess)
+                            .addOnFailureListener(onFailure);
+
+                });
             }
 
-            Tasks.whenAllSuccess(tasks)
-                    .addOnSuccessListener(t -> {
-                        Intent intent = new Intent(getApplicationContext(), ShowProfileFragment.class);
-                        intent.putExtra(UserProfile.PROFILE_INFO_KEY, currentProfile);
-                        setResult(RESULT_OK, intent);
-                        this.closeDialog();
-                        finish();
-                    })
-                    .addOnFailureListener(t -> {
-                        this.closeDialog();
-                        this.openDialog(DialogID.DIALOG_ERROR_FAILED_SAVE_DATA);
-                    });
+            // Otherwise, there is no need for the asynchronous pre-processing phase
+            else {
+                List<Task<?>> tasks = new ArrayList<>();
+                tasks.add(currentProfile.saveToFirebase(this.getResources()));
+                if (currentProfile.imageUpdated(originalProfile) && !currentProfile.hasProfilePicture()) {
+                    tasks.add(currentProfile.deleteProfilePictureFromFirebase());
+                }
+                Tasks.whenAllSuccess(tasks)
+                        .addOnSuccessListener(onSuccess)
+                        .addOnFailureListener(onFailure);
+            }
 
         } else {
             setResult(RESULT_CANCELED);
@@ -284,11 +320,18 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
     private void loadImageProfile(UserProfile profile) {
         ImageView imageView = findViewById(R.id.ep_profile_picture);
 
+        GlideRequest<Drawable> thumbnail = GlideApp
+                .with(this)
+                .load(currentProfile.getProfilePictureThumbnail())
+                .centerCrop();
+
         GlideApp.with(this)
                 .load(profile.getProfilePictureReference())
-                .centerCrop()
-                .placeholder(R.drawable.default_header)
                 .signature(new ObjectKey(profile.getProfilePictureLastModified()))
+                .thumbnail(thumbnail)
+                .fallback(R.drawable.default_header)
+                .transition(DrawableTransitionOptions.withCrossFade())
+                .centerCrop()
                 .into(imageView);
     }
 

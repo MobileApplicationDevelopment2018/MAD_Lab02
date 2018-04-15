@@ -3,27 +3,49 @@ package it.polito.mad.lab02.utils;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
-import android.media.ExifInterface;
+import android.os.AsyncTask;
 import android.support.annotation.NonNull;
+import android.support.media.ExifInterface;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 public class PictureUtilities {
 
-    public static ByteArrayOutputStream compressImage(@NonNull String imagePath, int targetWidth, int targetHeight, int quality) {
+    public static final String IMAGE_CONTENT_TYPE_UPLOAD = "image/webp";
 
-        if (targetWidth <= 0 || targetHeight <= 0 || quality < 0 || quality > 100) {
-            throw new IllegalArgumentException();
-        }
+    private static CompressedImage compressImage(String imagePath, int pictureSize,
+                                                 int thumbnailSize, int quality) {
 
-        Bitmap image = PictureUtilities.getImage(imagePath, targetWidth, targetHeight);
-        if (image == null) {
+        if (imagePath == null || pictureSize <= 0 || thumbnailSize <= 0 ||
+                quality < 0 || quality > 100) {
             return null;
         }
 
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        return image.compress(Bitmap.CompressFormat.WEBP, quality, out) ? out : null;
+        Bitmap pictureBitmap = PictureUtilities.getImage(imagePath, pictureSize, pictureSize);
+        if (pictureBitmap == null) {
+            return null;
+        }
+
+        float thumbnailRatio = (float) thumbnailSize / Math.max(pictureBitmap.getWidth(), pictureBitmap.getHeight());
+        if (thumbnailRatio > 1) {
+            thumbnailRatio = 1;
+        }
+        Bitmap thumbnailBitmap = Bitmap.createScaledBitmap(pictureBitmap,
+                (int) (pictureBitmap.getWidth() * thumbnailRatio),
+                (int) (pictureBitmap.getHeight() * thumbnailRatio),
+                true);
+        if (thumbnailBitmap == null) {
+            return null;
+        }
+
+        ByteArrayOutputStream picture = new ByteArrayOutputStream();
+        pictureBitmap.compress(Bitmap.CompressFormat.WEBP, quality, picture);
+
+        ByteArrayOutputStream thumbnail = new ByteArrayOutputStream();
+        thumbnailBitmap.compress(Bitmap.CompressFormat.WEBP, 0, thumbnail);
+
+        return new CompressedImage(picture, thumbnail);
     }
 
     private static Bitmap getImage(String imagePath, int targetWidth, int targetHeight) {
@@ -55,7 +77,7 @@ public class PictureUtilities {
     }
 
     private static int getRotation(@NonNull String imagePath) {
-        ExifInterface exifInterface = null;
+        ExifInterface exifInterface;
 
         try {
             exifInterface = new ExifInterface(imagePath);
@@ -88,5 +110,56 @@ public class PictureUtilities {
         matrix.postRotate(angle);
         return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(),
                 matrix, true);
+    }
+
+    public static class CompressedImage {
+        private final ByteArrayOutputStream picture;
+        private final ByteArrayOutputStream thumbnail;
+
+        CompressedImage(@NonNull ByteArrayOutputStream picture,
+                        @NonNull ByteArrayOutputStream thumbnail) {
+            this.picture = picture;
+            this.thumbnail = thumbnail;
+        }
+
+        public ByteArrayOutputStream getPicture() {
+            return picture;
+        }
+
+        public ByteArrayOutputStream getThumbnail() {
+            return thumbnail;
+        }
+    }
+
+    public static class CompressImageAsync extends AsyncTask<Void, Void, CompressedImage> {
+
+        private final String imagePath;
+        private final int pictureSize;
+        private final int thumbnailSize;
+        private final int quality;
+        private final OnCompleteListener onCompleteListener;
+
+        public CompressImageAsync(String imagePath, int pictureSize, int thumbnailSize, int quality,
+                                  @NonNull OnCompleteListener onCompleteListener) {
+            this.imagePath = imagePath;
+            this.pictureSize = pictureSize;
+            this.thumbnailSize = thumbnailSize;
+            this.quality = quality;
+            this.onCompleteListener = onCompleteListener;
+        }
+
+        @Override
+        protected CompressedImage doInBackground(Void... input) {
+            return PictureUtilities.compressImage(imagePath, pictureSize, thumbnailSize, quality);
+        }
+
+        @Override
+        protected void onPostExecute(CompressedImage data) {
+            onCompleteListener.onComplete(data);
+        }
+
+        public interface OnCompleteListener {
+            void onComplete(CompressedImage data);
+        }
     }
 }
