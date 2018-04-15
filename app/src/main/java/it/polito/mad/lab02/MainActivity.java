@@ -88,7 +88,7 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
         super.onStart();
 
         if (localProfile.isAnonymous() && firebaseAuth.getCurrentUser() != null) {
-            loadProfileFromFirebase();
+            setOnProfileLoadedListener();
         }
     }
 
@@ -96,9 +96,7 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
     protected void onStop() {
         super.onStop();
 
-        if (this.profileListener != null) {
-            UserProfile.unsetOnProfileLoadedListener(this.profileListener);
-        }
+        this.unsetOnProfileLoadedListener();
     }
 
     @Override
@@ -169,7 +167,7 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
 
                 // Successfully signed in
                 if (resultCode == RESULT_OK && firebaseAuth.getCurrentUser() != null) {
-                    loadProfileFromFirebase();
+                    setOnProfileLoadedListener();
                     return;
                 }
 
@@ -279,11 +277,11 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
         Toast.makeText(this, message, Toast.LENGTH_LONG).show();
     }
 
-    private void loadProfileFromFirebase() {
+    private void setOnProfileLoadedListener() {
         this.openDialog(DialogID.DIALOG_LOADING, false);
 
         this.profileListener = UserProfile.setOnProfileLoadedListener(data -> {
-            this.profileListener = null;
+            this.unsetOnProfileLoadedListener();
             closeDialog();
 
             if (data == null) {
@@ -295,9 +293,17 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
             }
 
         }, error -> {
+            this.unsetOnProfileLoadedListener();
             openDialog(DialogID.DIALOG_ERROR_RETRIEVE_DIALOG, true);
             signOut();
         });
+    }
+
+    public void unsetOnProfileLoadedListener() {
+        if (this.profileListener != null) {
+            UserProfile.unsetOnProfileLoadedListener(this.profileListener);
+            this.profileListener = null;
+        }
     }
 
     private void completeRegistration() {

@@ -90,24 +90,21 @@ public class UserProfile implements Serializable {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         assert currentUser != null;
 
-        ValueEventListener listener = new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                onSuccess.apply(dataSnapshot.getValue(UserProfile.Data.class));
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                onFailure.apply(databaseError);
-            }
-        };
-
-        FirebaseDatabase.getInstance().getReference()
+        return FirebaseDatabase.getInstance().getReference()
                 .child(FIREBASE_USERS_KEY)
                 .child(currentUser.getUid())
                 .child(FIREBASE_DATA_KEY)
-                .addListenerForSingleValueEvent(listener);
-        return listener;
+                .addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        onSuccess.apply(dataSnapshot.getValue(UserProfile.Data.class));
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        onFailure.apply(databaseError);
+                    }
+                });
     }
 
     public static void unsetOnProfileLoadedListener(@NonNull ValueEventListener listener) {
