@@ -291,14 +291,14 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
             barcodeDialog = new AlertDialog.Builder(this)
                     .setTitle(getResources().getString(R.string.code_retrieved))
                     .setMessage(barcode.displayValue)
-                    .setPositiveButton("OK", (dialog, wich) -> {
+                    .setPositiveButton(getResources().getString(R.string.ok), (dialog, wich) -> {
                         Intent data = new Intent();
                         data.putExtra(BarcodeObject, barcode);
                         setResult(CommonStatusCodes.SUCCESS, data);
                         dialog.dismiss();
                         finish();
                     })
-                    .setNegativeButton("Rescan", (dialog, wich) -> {
+                    .setNegativeButton(getResources().getString(R.string.rescan), (dialog, wich) -> {
                         //restore working processor
                         barcodeDetector.setProcessor(processor);
                         dialog.dismiss();

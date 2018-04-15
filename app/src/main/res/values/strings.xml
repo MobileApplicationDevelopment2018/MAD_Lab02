@@ -75,7 +75,7 @@
     <string name="add_book_invalid_isbn">invalid ISBN</string>
 
 
-    <string name="ok" translatable="false">OK</string>
+    <string name="ok" translatable="false">Ok</string>
     <string name="permission_camera_rationale">Access to the camera is needed for detection</string>
     <string name="no_camera_permission">This application cannot run because it does not have the camera permission. The application will now exit.</string>
     <string name="low_storage_error">Face detector dependencies cannot be downloaded due to low device storage</string>
@@ -88,4 +88,7 @@
     <string name="facebook_login_protocol_scheme" translatable="false">fb417996611977813</string>
     <string name="add_book_confirm">Add</string>
     <string name="add_book_cancel">Cancel</string>
+    <string name="add_book_isbn_loading_title">Loading</string>
+    <string name="add_book_isbn_loading_message">Retrieving ISBN info</string>
+    <string name="rescan">Rescan</string>
 </resources>

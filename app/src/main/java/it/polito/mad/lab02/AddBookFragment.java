@@ -80,6 +80,8 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
             wrapperVisibility = View.GONE;
         } else {
             wrapperVisibility = savedInstanceState.getInt("wrapperVisibility");
+            view.findViewById(R.id.ab_add_book).setEnabled(true);
+            view.findViewById(R.id.ab_clear_fields).setEnabled(true);
         }
 
         LinearLayout wrapper = view.findViewById(R.id.ab_autofilled_info_wrapper);
@@ -91,10 +93,19 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
 
         autofill.setOnCheckedChangeListener((buttonView, isChecked) -> {
             switcher.showNext();
+            View currentView = switcher.getCurrentView();
+            if (currentView.getId() == R.id.ab_autofill_book_view && wrapperVisibility == View.VISIBLE) {
+                view.findViewById(R.id.ab_add_book).setEnabled(true);
+                view.findViewById(R.id.ab_clear_fields).setEnabled(true);
+            } else {
+                view.findViewById(R.id.ab_add_book).setEnabled(false);
+                view.findViewById(R.id.ab_clear_fields).setEnabled(false);
+            }
         });
 
         ImageButton scanBarcodeBtn = view.findViewById(R.id.ab_barcode_scan);
         Button startQueryBtn = view.findViewById(R.id.ab_start_query);
+        Button resetBtn = view.findViewById(R.id.ab_clear_fields);
         EditText isbnEdit = view.findViewById(R.id.ab_isbn_edit);
 
         scanBarcodeBtn.setOnClickListener((view3) -> {
@@ -109,6 +120,8 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
                 isbnQuery.execute(isbnEdit.getText().toString());
             }
         });
+
+        resetBtn.setOnClickListener(v -> clearViews());
 
         isbnEdit.addTextChangedListener(new TextWatcher() {
 
@@ -165,7 +178,9 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
     @Override
     public void onTaskStarted() {
         isTaskRunning = true;
-        progressDialog = ProgressDialog.show(getActivity(), "Loading", "Retrieving ISBN info");
+        progressDialog = ProgressDialog.show(getActivity(),
+                getResources().getString(R.string.add_book_isbn_loading_title),
+                getResources().getString(R.string.add_book_isbn_loading_message));
     }
 
     @Override
@@ -197,6 +212,8 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
             bookPublisher.setText(volumeInfo.getPublisher());
             bookYear.setText(volumeInfo.getPublishedDate());
             wrapper.setVisibility(View.VISIBLE);
+            getView().findViewById(R.id.ab_add_book).setEnabled(true);
+            getView().findViewById(R.id.ab_clear_fields).setEnabled(true);
         }
     }
 
@@ -257,6 +274,10 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
             if (resultCode == CommonStatusCodes.SUCCESS) {
                 if (data != null) {
                     Barcode barcode = data.getParcelableExtra(BarcodeCaptureActivity.BarcodeObject);
+
+                    if (!barcode.displayValue.equals(((EditText) getView().findViewById(R.id.ab_isbn_edit)).getText()))
+                        clearViews();
+
                     ((EditText) getView().findViewById(R.id.ab_isbn_edit)).setText(barcode.displayValue);
                 }
             } else {
@@ -265,6 +286,28 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
         } else {
             super.onActivityResult(requestCode, resultCode, data);
         }
+    }
+
+    private void clearViews() {
+        TextView bookTitle = getView().findViewById(R.id.ab_title);
+        TextView bookAuthor = getView().findViewById(R.id.ab_author);
+        TextView bookPublisher = getView().findViewById(R.id.ab_publisher);
+        TextView bookYear = getView().findViewById(R.id.ab_edition_year);
+
+        bookTitle.setText("");
+        bookAuthor.setText("");
+        bookPublisher.setText("");
+        bookYear.setText("");
+
+        ((EditText) getView().findViewById(R.id.ab_isbn_edit)).setText("");
+
+        LinearLayout wrapper = getView().findViewById(R.id.ab_autofilled_info_wrapper);
+
+        wrapperVisibility = View.GONE;
+        wrapper.setVisibility(wrapperVisibility);
+
+        getView().findViewById(R.id.ab_add_book).setEnabled(false);
+        getView().findViewById(R.id.ab_clear_fields).setEnabled(false);
     }
 
     /**
@@ -294,7 +337,9 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
         }
 
         if (isTaskRunning) {
-            progressDialog = ProgressDialog.show(getActivity(), "Loading", "Retrieving ISBN info");
+            progressDialog = ProgressDialog.show(getActivity(),
+                    getResources().getString(R.string.add_book_isbn_loading_title),
+                    getResources().getString(R.string.add_book_isbn_loading_message));
         }
     }
 }

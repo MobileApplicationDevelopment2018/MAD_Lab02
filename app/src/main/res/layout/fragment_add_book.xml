@@ -88,6 +88,7 @@
                 android:measureAllChildren="false">
 
                 <LinearLayout
+                    android:id="@+id/ab_input_book_view"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
@@ -150,6 +151,7 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/ab_autofill_book_view"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
@@ -159,8 +161,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
-                        android:enabled="false"
                         android:background="@drawable/ab_custom_button_green"
+                        android:enabled="false"
                         android:text="@string/add_book_search_isbn"
                         android:textColor="#FFFFFF" />
 
@@ -187,7 +189,8 @@
                                 android:id="@+id/ab_title"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_alignParentRight="true" />
+                                android:layout_alignParentRight="true"
+                                android:freezesText="true" />
                         </RelativeLayout>
 
                         <RelativeLayout
@@ -205,7 +208,8 @@
                                 android:id="@+id/ab_author"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_alignParentRight="true" />
+                                android:layout_alignParentRight="true"
+                                android:freezesText="true" />
                         </RelativeLayout>
 
                         <RelativeLayout
@@ -223,7 +227,8 @@
                                 android:id="@+id/ab_publisher"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_alignParentRight="true" />
+                                android:layout_alignParentRight="true"
+                                android:freezesText="true" />
                         </RelativeLayout>
 
                         <RelativeLayout
@@ -241,7 +246,8 @@
                                 android:id="@+id/ab_edition_year"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_alignParentRight="true" />
+                                android:layout_alignParentRight="true"
+                                android:freezesText="true" />
                         </RelativeLayout>
                     </LinearLayout>
                 </LinearLayout>
@@ -250,7 +256,7 @@
             <android.support.design.widget.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingTop="5dp">
+                android:paddingTop="10dp">
 
                 <android.support.design.widget.TextInputEditText
                     android:id="@+id/add_book_condition_edit"
@@ -262,32 +268,39 @@
 
             <RelativeLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp">
+                android:layout_height="0dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="8dp"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:padding="8dp">
 
-                <Button
-                    android:id="@+id/ab_add_book"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentLeft="true"
-                    android:layout_gravity="center"
-                    android:layout_marginLeft="32dp"
-                    android:background="@drawable/ab_custom_button_green"
-                    android:enabled="false"
-                    android:text="@string/add_book_confirm"
-                    android:textColor="#FFFFFF" />
+                    android:layout_centerInParent="true">
 
-                <Button
-                    android:id="@+id/ab_clear_fields"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentRight="true"
-                    android:layout_gravity="center"
-                    android:layout_marginRight="32dp"
-                    android:background="@drawable/ab_custom_button_white"
-                    android:enabled="false"
-                    android:text="@string/add_book_cancel"
-                    android:textColor="#9CCC65" />
+                    <Button
+                        android:id="@+id/ab_add_book"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="16dp"
+                        android:layout_marginRight="16dp"
+                        android:background="@drawable/ab_custom_button_green"
+                        android:enabled="false"
+                        android:text="@string/add_book_confirm"
+                        android:textColor="#FFFFFF" />
+
+                    <Button
+                        android:id="@+id/ab_clear_fields"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/ab_custom_button_white"
+                        android:enabled="false"
+                        android:text="@string/add_book_cancel"
+                        android:textColor="#8BC34A" />
+
+                </LinearLayout>
             </RelativeLayout>
         </LinearLayout>
     </ScrollView>
