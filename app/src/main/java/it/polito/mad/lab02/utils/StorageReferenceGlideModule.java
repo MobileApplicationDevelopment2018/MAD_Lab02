@@ -12,6 +12,7 @@ import com.google.firebase.storage.StorageReference;
 
 import java.io.InputStream;
 
+@SuppressWarnings("WeakerAccess")
 @GlideModule
 public class StorageReferenceGlideModule extends AppGlideModule {
 

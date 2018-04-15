@@ -232,7 +232,9 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
                     ((EditText) getView().findViewById(R.id.ab_isbn_edit)).setText(barcode.displayValue);
                 }
             } else {
-                Toast.makeText(this.getContext(), String.format(getString(R.string.barcode_error), CommonStatusCodes.getStatusCodeString(resultCode)), Toast.LENGTH_SHORT);
+                Toast.makeText(this.getContext(), String.format(getString(R.string.barcode_error),
+                        CommonStatusCodes.getStatusCodeString(resultCode)), Toast.LENGTH_SHORT)
+                        .show();
             }
         } else {
             super.onActivityResult(requestCode, resultCode, data);

@@ -25,13 +25,11 @@
     <string name="reset_option">Reset the default picture</string>
 
     <string name="invalid_username">Username must not be empty</string>
-    <string name="invalid_email">Invalid e-mail format</string>
     <string name="invalid_location_wrong">Location can contain only alphabetic characters</string>
     <string name="invalid_location_empty">Location must not be empty</string>
     <string name="discard_changes">Discard changes?</string>
     <string name="incorrect_values">Some fields contain invalid data.\nPlease, check them</string>
     <string name="failed_obtain_picture">Something went wrong while obtaining the picture</string>
-    <string name="success_save_data">Profile correctly updated</string>
     <string name="failed_save_data">Something went wrong while saving your data</string>
     <string name="failed_load_data">Something went wrong while retrieving your data. You will be signed out.</string>
 
@@ -58,11 +56,8 @@
     <string name="sign_out_failed">Sign Out failed</string>
     <string name="fui_name_hint">Username</string>
 
-
     <string name="complete_profile">Review and complete your information if you want</string>
 
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="hint_editionYear">Edition Year</string>
     <string name="hint_condition">Book conditions</string>
     <string name="hint_publisher">Publisher</string>
@@ -77,15 +72,13 @@
     <string name="book_edition_year">Edition Year</string>
 
 
-    <string name="ok">OK</string>
+    <string name="ok" translatable="false">OK</string>
     <string name="permission_camera_rationale">Access to the camera is needed for detection</string>
-    <string name="no_camera_permission">This application cannot run because it does not have the camera permission.  The application will now exit.</string>
+    <string name="no_camera_permission">This application cannot run because it does not have the camera permission. The application will now exit.</string>
     <string name="low_storage_error">Face detector dependencies cannot be downloaded due to low device storage</string>
-    <string name="barcode_success">Barcode read successfully</string>
-    <string name="barcode_failure">No barcode captured</string>
     <string name="barcode_error">"Error reading barcode: %1$s"</string>
     <string name="scan_barcode">Scan barcode</string>
-    <string name="saving_data">Saving your personal data. Please wait...</string>
+    <string name="saving_data">Saving your personal data. Please wait…</string>
     <string name="code_retrieved">Code Retrieved:</string>
 
     <string name="facebook_application_id" translatable="false">417996611977813</string>

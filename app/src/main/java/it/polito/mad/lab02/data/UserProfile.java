@@ -1,6 +1,7 @@
 package it.polito.mad.lab02.data;
 
 import android.content.res.Resources;
+import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.util.Base64;
 import android.util.Patterns;
@@ -36,7 +37,7 @@ public class UserProfile implements Serializable {
     private static final String FIREBASE_STORAGE_IMAGE_NAME = "profile";
 
     private static final int PROFILE_PICTURE_SIZE = 1024;
-    private static final int PROFILE_PICTURE_THUMBNAIL_SIZE = 128;
+    private static final int PROFILE_PICTURE_THUMBNAIL_SIZE = 64;
     private static final int PROFILE_PICTURE_QUALITY = 50;
 
     private final Data data;
@@ -83,8 +84,33 @@ public class UserProfile implements Serializable {
         return email.substring(0, email.indexOf('@'));
     }
 
-    public static void loadFromFirebase(@NonNull OnDataLoadSuccess onSuccess,
-                                        @NonNull OnDataLoadFailure onFailure) {
+    public static ValueEventListener setOnProfileLoadedListener(@NonNull OnDataLoadSuccess onSuccess,
+                                                                @NonNull OnDataLoadFailure onFailure) {
+
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        assert currentUser != null;
+
+        ValueEventListener listener = new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                onSuccess.apply(dataSnapshot.getValue(UserProfile.Data.class));
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                onFailure.apply(databaseError);
+            }
+        };
+
+        FirebaseDatabase.getInstance().getReference()
+                .child(FIREBASE_USERS_KEY)
+                .child(currentUser.getUid())
+                .child(FIREBASE_DATA_KEY)
+                .addListenerForSingleValueEvent(listener);
+        return listener;
+    }
+
+    public static void unsetOnProfileLoadedListener(@NonNull ValueEventListener listener) {
 
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         assert currentUser != null;
@@ -93,17 +119,7 @@ public class UserProfile implements Serializable {
                 .child(FIREBASE_USERS_KEY)
                 .child(currentUser.getUid())
                 .child(FIREBASE_DATA_KEY)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        onSuccess.apply(dataSnapshot.getValue(UserProfile.Data.class));
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-                        onFailure.apply(databaseError);
-                    }
-                });
+                .removeEventListener(listener);
     }
 
     public void setProfilePicture(String path) {
@@ -251,10 +267,10 @@ public class UserProfile implements Serializable {
                 .delete();
     }
 
-    public void processProfilePictureAsync(
+    public AsyncTask<Void, Void, PictureUtilities.CompressedImage> processProfilePictureAsync(
             @NonNull PictureUtilities.CompressImageAsync.OnCompleteListener onCompleteListener) {
 
-        new PictureUtilities.CompressImageAsync(
+        return new PictureUtilities.CompressImageAsync(
                 localImagePath, PROFILE_PICTURE_SIZE, PROFILE_PICTURE_THUMBNAIL_SIZE,
                 PROFILE_PICTURE_QUALITY, onCompleteListener)
                 .execute();
@@ -280,7 +296,7 @@ public class UserProfile implements Serializable {
     }
 
     /* Fields need to be public to enable Firebase to access them */
-    @SuppressWarnings("WeakerAccess")
+    @SuppressWarnings({"WeakerAccess", "CanBeFinal"})
     public static class Data implements Serializable {
 
         public Profile profile;
@@ -326,6 +342,7 @@ public class UserProfile implements Serializable {
                 this.profilePictureThumbnail = other.profilePictureThumbnail;
             }
         }
+
 
         private static class Statistics implements Serializable {
             public float rating;
