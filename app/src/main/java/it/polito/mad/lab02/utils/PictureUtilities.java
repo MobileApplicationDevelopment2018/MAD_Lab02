@@ -43,7 +43,7 @@ public class PictureUtilities {
         pictureBitmap.compress(Bitmap.CompressFormat.WEBP, quality, picture);
 
         ByteArrayOutputStream thumbnail = new ByteArrayOutputStream();
-        thumbnailBitmap.compress(Bitmap.CompressFormat.WEBP, 0, thumbnail);
+        thumbnailBitmap.compress(Bitmap.CompressFormat.WEBP, quality / 2, thumbnail);
 
         return new CompressedImage(picture, thumbnail);
     }

@@ -218,36 +218,30 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
         drawer.getMenu().clear();
 
         if (!localProfile.isAnonymous()) {
-            //TODO: set the profile picture
             username.setText(localProfile.getUsername());
             email.setVisibility(View.VISIBLE);
             email.setText(localProfile.getEmail());
-            if (localProfile.hasProfilePicture()) {
-                GlideRequest<Drawable> thumbnail = GlideApp
-                        .with(this)
-                        .load(localProfile.getProfilePictureThumbnail())
-                        .apply(RequestOptions.circleCropTransform());
-
-                GlideApp.with(this)
-                        .load(localProfile.getProfilePictureReference())
-                        .signature(new ObjectKey(localProfile.getProfilePictureLastModified()))
-                        .thumbnail(thumbnail)
-                        .fallback(R.drawable.default_header)
-                        .transition(DrawableTransitionOptions.withCrossFade())
-                        .apply(RequestOptions.circleCropTransform())
-                        .into(profilePicture);
-            } else {
-                profilePicture.setImageResource(R.mipmap.ic_drawer_picture_round);
-            }
             drawer.inflateMenu(R.menu.activity_main_drawer_signed_in);
         } else {
-            //TODO: reset the profile picture
             username.setText(R.string.anonymous);
             email.setVisibility(View.INVISIBLE);
             email.setText("");
             drawer.inflateMenu(R.menu.activity_main_drawer);
-            profilePicture.setImageResource(R.mipmap.ic_drawer_picture_round);
         }
+
+        GlideRequest<Drawable> thumbnail = GlideApp
+                .with(this)
+                .load(localProfile.getProfilePictureThumbnail())
+                .apply(RequestOptions.circleCropTransform());
+
+        GlideApp.with(this)
+                .load(localProfile.getProfilePictureReference())
+                .signature(new ObjectKey(localProfile.getProfilePictureLastModified()))
+                .thumbnail(thumbnail)
+                .fallback(R.mipmap.ic_drawer_picture_round)
+                .transition(DrawableTransitionOptions.withCrossFade())
+                .apply(RequestOptions.circleCropTransform())
+                .into(profilePicture);
 
         drawer.getMenu().getItem(0).setChecked(true);
     }

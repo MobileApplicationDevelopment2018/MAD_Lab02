@@ -5,6 +5,7 @@ import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -56,9 +57,11 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
     private static final int CAMERA = 2;
     private static final int GALLERY = 3;
     private static final int PERMISSIONS_REQUEST_EXTERNAL_STORAGE = 4;
+    private static final int PERMISSIONS_REQUEST_CAMERA = 5;
 
     private EditText username, location, biography;
     private UserProfile originalProfile, currentProfile;
+    private int imageViewHeight;
 
     private boolean isCommitting;
     private AsyncTask<Void, Void, PictureUtilities.CompressedImage> pictureProcessingTask;
@@ -97,6 +100,7 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
 
         // Fill the views with the data
         fillViews(currentProfile);
+        attachListenerHideFloatingActionButton();
 
         final FloatingActionButton floatingActionButton = findViewById(R.id.ep_camera_button);
         floatingActionButton.setOnClickListener(v -> this.openDialog(DialogID.DIALOG_CHOOSE_PICTURE, true));
@@ -247,6 +251,15 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
                 return;
             }
 
+            case PERMISSIONS_REQUEST_CAMERA: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    cameraTakePicture();
+                }
+
+                return;
+            }
+
             default:
                 break;
         }
@@ -301,7 +314,7 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
             // A new profile picture has to be uploaded: it is prepared in background
             // and then it is uploaded to firebase and the other changes are committed
             if (currentProfile.imageUpdated(originalProfile) && currentProfile.hasProfilePicture()) {
-                currentProfile.processProfilePictureAsync(picture -> {
+                pictureProcessingTask = currentProfile.processProfilePictureAsync(picture -> {
 
                     if (picture == null) {
                         onFailure.onFailure(new Exception());
@@ -426,7 +439,14 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
         assert reset != null;
 
         camera.setOnClickListener(v1 -> {
-            cameraTakePicture();
+            if (ContextCompat.checkSelfPermission(this,
+                    Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.CAMERA}, PERMISSIONS_REQUEST_CAMERA);
+            } else {
+                cameraTakePicture();
+            }
+
             this.closeDialog();
         });
 
@@ -452,8 +472,30 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
         return dialog;
     }
 
+    private void attachListenerHideFloatingActionButton() {
+        final ImageView imageView = findViewById(R.id.ep_profile_picture);
+        final FloatingActionButton floatingActionButton = findViewById(R.id.ep_camera_button);
+
+        imageViewHeight = 0;
+        imageView.getViewTreeObserver().addOnScrollChangedListener(() -> {
+            Rect visible = new Rect();
+            imageView.getLocalVisibleRect(visible);
+
+            if (visible.height() > imageViewHeight) {
+                imageViewHeight = visible.height();
+            }
+
+            if (floatingActionButton.isShown() && (visible.top < 0 || visible.height() < 0.2f * imageViewHeight)) {
+                floatingActionButton.hide();
+            }
+
+            if (!floatingActionButton.isShown() && visible.top > 0 && visible.height() > 0.2f * imageViewHeight) {
+                floatingActionButton.show();
+            }
+        });
+    }
+
     public enum DialogID {
-        DIALOG_NONE,
         DIALOG_CHOOSE_PICTURE,
         DIALOG_SAVING,
         DIALOG_CONFIRM_EXIT,

@@ -37,7 +37,7 @@ public class UserProfile implements Serializable {
     private static final String FIREBASE_STORAGE_IMAGE_NAME = "profile";
 
     private static final int PROFILE_PICTURE_SIZE = 1024;
-    private static final int PROFILE_PICTURE_THUMBNAIL_SIZE = 128;
+    private static final int PROFILE_PICTURE_THUMBNAIL_SIZE = 64;
     private static final int PROFILE_PICTURE_QUALITY = 50;
 
     private final Data data;
@@ -296,7 +296,7 @@ public class UserProfile implements Serializable {
     }
 
     /* Fields need to be public to enable Firebase to access them */
-    @SuppressWarnings("WeakerAccess")
+    @SuppressWarnings({"WeakerAccess", "CanBeFinal"})
     public static class Data implements Serializable {
 
         public Profile profile;
@@ -342,6 +342,7 @@ public class UserProfile implements Serializable {
                 this.profilePictureThumbnail = other.profilePictureThumbnail;
             }
         }
+
 
         private static class Statistics implements Serializable {
             public float rating;
