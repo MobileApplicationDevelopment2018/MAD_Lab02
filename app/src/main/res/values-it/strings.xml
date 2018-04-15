@@ -73,4 +73,6 @@
     <string name="barcode_error">Errore nella lettura del codice a barre: %1$s</string>
     <string name="scan_barcode">Scansiona codice a barre</string>
     <string name="low_storage_error">Le dipendenze necessarie al riconiscimento facciale non possono essere scaricate in quanto la memoria disponibile è ridotta</string>
+    <string name="add_book_confirm">Aggiungi</string>
+    <string name="add_book_cancel">Annulla</string>
 </resources>

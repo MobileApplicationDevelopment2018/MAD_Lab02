@@ -160,7 +160,7 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
                         android:enabled="false"
-                        android:background="@drawable/ab_custom_button"
+                        android:background="@drawable/ab_custom_button_green"
                         android:text="@string/add_book_search_isbn"
                         android:textColor="#FFFFFF" />
 
@@ -259,6 +259,36 @@
                     android:hint="@string/hint_condition"
                     android:inputType="text" />
             </android.support.design.widget.TextInputLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp">
+
+                <Button
+                    android:id="@+id/ab_add_book"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentLeft="true"
+                    android:layout_gravity="center"
+                    android:layout_marginLeft="32dp"
+                    android:background="@drawable/ab_custom_button_green"
+                    android:enabled="false"
+                    android:text="@string/add_book_confirm"
+                    android:textColor="#FFFFFF" />
+
+                <Button
+                    android:id="@+id/ab_clear_fields"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_gravity="center"
+                    android:layout_marginRight="32dp"
+                    android:background="@drawable/ab_custom_button_white"
+                    android:enabled="false"
+                    android:text="@string/add_book_cancel"
+                    android:textColor="#9CCC65" />
+            </RelativeLayout>
         </LinearLayout>
     </ScrollView>
 </FrameLayout>
