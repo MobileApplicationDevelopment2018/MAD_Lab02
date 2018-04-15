@@ -70,6 +70,9 @@
     <string name="book_title">Title</string>
     <string name="book_publisher">Publisher</string>
     <string name="book_edition_year">Edition Year</string>
+    <string name="add_book_isbn_query_failed">ISBN query failed</string>
+    <string name="add_book_isbn_query_no_results">No results found</string>
+    <string name="add_book_invalid_isbn">invalid ISBN</string>
 
 
     <string name="ok" translatable="false">OK</string>

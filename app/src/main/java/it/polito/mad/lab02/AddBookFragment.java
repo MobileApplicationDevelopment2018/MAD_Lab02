@@ -8,6 +8,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,13 +18,14 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewSwitcher;
 
 import com.google.android.gms.common.api.CommonStatusCodes;
 import com.google.android.gms.vision.barcode.Barcode;
-
-import org.json.JSONObject;
+import com.google.api.services.books.model.Volume;
+import com.google.api.services.books.model.Volumes;
 
 import it.polito.mad.lab02.barcodereader.BarcodeCaptureActivity;
 
@@ -45,6 +47,7 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
     private ProgressDialog progressDialog;
     private boolean isTaskRunning;
     private IsbnQuery isbnQuery;
+    private int wrapperVisibility;
 
     /**
      * Use this factory method to create a new instance of
@@ -61,28 +64,32 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
-
-        if (savedInstanceState == null) {
-            isTaskRunning = false;
-        } else {
-            isTaskRunning = savedInstanceState.getBoolean("isTaskRunning");
-        }
-
-        if (isTaskRunning) {
-            progressDialog = ProgressDialog.show(getActivity(), "Loading", "Retrieving ISBN info");
-        }
+        setRetainInstance(true);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        super.onCreateView(inflater, container, savedInstanceState);
+
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_add_book, container, false);
+
+        if (savedInstanceState == null) {
+            wrapperVisibility = View.GONE;
+        } else {
+            wrapperVisibility = savedInstanceState.getInt("wrapperVisibility");
+        }
+
+        LinearLayout wrapper = view.findViewById(R.id.ab_autofilled_info_wrapper);
+        wrapper.setVisibility(wrapperVisibility);
+
+        ViewSwitcher switcher = view.findViewById(R.id.ab_view_switcher);
+
         Switch autofill = view.findViewById(R.id.ab_autofill);
-        autofill.setOnClickListener((view1) -> {
-            ViewSwitcher switcher = view.findViewById(R.id.ab_view_switcher);
+
+        autofill.setOnCheckedChangeListener((buttonView, isChecked) -> {
             switcher.showNext();
         });
 
@@ -119,7 +126,8 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
                     isbnEdit.setError(null);
                     startQueryBtn.setEnabled(true);
                 } else {
-                    isbnEdit.setError("Invalid ISBN");
+                    if (isbnEdit.getText().length() != 0)
+                        isbnEdit.setError(getString(R.string.add_book_invalid_isbn));
                     startQueryBtn.setEnabled(false);
                 }
             }
@@ -161,14 +169,29 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
     }
 
     @Override
-    public void onTaskFinished(JSONObject result) {
+    public void onTaskFinished(Volumes volumes) {
         if (progressDialog != null) {
             progressDialog.dismiss();
         }
         isTaskRunning = false;
-        if (result != null) {
+        if (volumes == null) {
+            Toast.makeText(getContext(), getResources().getString(R.string.add_book_isbn_query_failed), Toast.LENGTH_SHORT).show();
+        } else if (volumes.getTotalItems() == 0 || volumes.getItems() == null) {
+            Toast.makeText(getContext(), getResources().getString(R.string.add_book_isbn_query_no_results), Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(getContext(), "Query completed successfully", Toast.LENGTH_SHORT).show();
             LinearLayout wrapper = getView().findViewById(R.id.ab_autofilled_info_wrapper);
-            //TODO: fill textviews with desirialized JSON
+            final Volume.VolumeInfo volumeInfo = volumes.getItems().get(0).getVolumeInfo();
+            TextView bookTitle = getView().findViewById(R.id.ab_title);
+            TextView bookAuthor = getView().findViewById(R.id.ab_author);
+            TextView bookPublisher = getView().findViewById(R.id.ab_publisher);
+            TextView bookYear = getView().findViewById(R.id.ab_edition_year);
+            bookTitle.setText(volumeInfo.getTitle());
+            //handle multiple authors
+            String[] authors = (String[]) volumeInfo.getAuthors().toArray();
+            bookAuthor.setText(TextUtils.join(", ", authors));
+            bookPublisher.setText(volumeInfo.getPublisher());
+            bookYear.setText(volumeInfo.getPublishedDate());
             wrapper.setVisibility(View.VISIBLE);
         }
     }
@@ -221,6 +244,7 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putBoolean("isTaskRunning", isTaskRunning);
+        outState.putInt("wrapperVisibility", wrapperVisibility);
     }
 
     @Override
@@ -232,9 +256,7 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
                     ((EditText) getView().findViewById(R.id.ab_isbn_edit)).setText(barcode.displayValue);
                 }
             } else {
-                Toast.makeText(this.getContext(), String.format(getString(R.string.barcode_error),
-                        CommonStatusCodes.getStatusCodeString(resultCode)), Toast.LENGTH_SHORT)
-                        .show();
+                Toast.makeText(this.getContext(), String.format(getString(R.string.barcode_error), CommonStatusCodes.getStatusCodeString(resultCode)), Toast.LENGTH_SHORT);
             }
         } else {
             super.onActivityResult(requestCode, resultCode, data);
@@ -260,5 +282,15 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
         super.onActivityCreated(savedInstanceState);
 
         getActivity().setTitle(R.string.add_book);
+
+        if (savedInstanceState == null) {
+            isTaskRunning = false;
+        } else {
+            isTaskRunning = savedInstanceState.getBoolean("isTaskRunning");
+        }
+
+        if (isTaskRunning) {
+            progressDialog = ProgressDialog.show(getActivity(), "Loading", "Retrieving ISBN info");
+        }
     }
 }

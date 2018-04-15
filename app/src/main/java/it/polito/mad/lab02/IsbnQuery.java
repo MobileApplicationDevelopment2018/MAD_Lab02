@@ -7,23 +7,44 @@ import android.os.AsyncTask;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.google.api.client.http.apache.ApacheHttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.services.books.Books;
+import com.google.api.services.books.Books.Volumes.List;
+import com.google.api.services.books.model.Volumes;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
-import java.net.SocketTimeoutException;
-import java.net.URL;
 
-class IsbnQuery extends AsyncTask<String, Object, JSONObject> {
+class IsbnQuery extends AsyncTask<String, Object, Volumes> {
 
-    private final static String baseUrl = "https://www.googleapis.com/books/v1/volumes?q=isbn:";
     private TaskListener mListener;
     private ConnectivityManager mConnectivityManager;
+
+    @Override
+    protected Volumes doInBackground(String... isbns) {
+
+        if (isCancelled())
+            return null;
+
+        JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
+
+        final Books booksClient;
+        booksClient = new Books.Builder(new ApacheHttpTransport(), jsonFactory, null).build();
+
+        List volumesList;
+        Volumes volumes;
+        try {
+            volumesList = booksClient.volumes().list("isbn:" + isbns[0]);
+            // Execute the query.
+            volumes = volumesList.execute();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return volumes;
+
+    }
 
     public IsbnQuery(TaskListener listener) {
         mListener = listener;
@@ -40,63 +61,8 @@ class IsbnQuery extends AsyncTask<String, Object, JSONObject> {
     }
 
     @Override
-    protected JSONObject doInBackground(String... isbns) {
-
-        if (isCancelled()) {
-            return null;
-        }
-
-        String apiUrlString = baseUrl + isbns[0];
-        try {
-            HttpURLConnection connection;
-            try {
-                connection = (HttpURLConnection) new URL(apiUrlString).openConnection();
-                connection.setRequestMethod("GET");
-                connection.setReadTimeout(5000); // 5 seconds
-                connection.setConnectTimeout(5000); // 5 seconds
-            } catch (MalformedURLException e) {
-                throw new RuntimeException(e);
-            } catch (ProtocolException e) {
-                throw new RuntimeException(e);
-            }
-            int responseCode = connection.getResponseCode();
-            if (responseCode != 200) {
-                Log.w(getClass().getName(), apiUrlString + " request failed. Response code: " + responseCode);
-                connection.disconnect();
-                return null;
-            }
-
-            // Read data from response.
-            StringBuilder builder = new StringBuilder();
-            BufferedReader responseReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-            String line = responseReader.readLine();
-            while (line != null) {
-                builder.append(line);
-                line = responseReader.readLine();
-            }
-            String responseString = builder.toString();
-            Log.d(getClass().getName(), "Response String: " + responseString);
-            JSONObject responseJson = new JSONObject(responseString);
-            // Close connection and return response code.
-            connection.disconnect();
-            return responseJson;
-        } catch (SocketTimeoutException e) {
-            Log.w(getClass().getName(), "Connection timed out. Returning null");
-            return null;
-        } catch (IOException e) {
-            Log.d(getClass().getName(), "IOException when connecting to Google Books API.");
-            e.printStackTrace();
-            return null;
-        } catch (JSONException e) {
-            Log.d(getClass().getName(), "JSONException when connecting to Google Books API.");
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    @Override
-    protected void onPostExecute(JSONObject responseJson) {
-        mListener.onTaskFinished(responseJson);
+    protected void onPostExecute(Volumes volumes) {
+        mListener.onTaskFinished(volumes);
     }
 
     private boolean isNetworkConnected() {
@@ -112,7 +78,7 @@ class IsbnQuery extends AsyncTask<String, Object, JSONObject> {
     public interface TaskListener {
         void onTaskStarted();
 
-        void onTaskFinished(JSONObject result);
+        void onTaskFinished(Volumes result);
     }
 }
 
