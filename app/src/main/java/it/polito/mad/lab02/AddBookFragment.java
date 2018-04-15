@@ -188,7 +188,10 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
             TextView bookYear = getView().findViewById(R.id.ab_edition_year);
             bookTitle.setText(volumeInfo.getTitle());
             //handle multiple authors
-            String[] authors = (String[]) volumeInfo.getAuthors().toArray();
+            String[] authors = new String[volumeInfo.getAuthors().size()];
+            int i = 0;
+            for (String author : volumeInfo.getAuthors())
+                authors[i++] = author;
             bookAuthor.setText(TextUtils.join(", ", authors));
             bookPublisher.setText(volumeInfo.getPublisher());
             bookYear.setText(volumeInfo.getPublishedDate());
