@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_marginLeft="16dp"
 
     android:layout_marginRight="16dp"
@@ -19,66 +20,58 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <RelativeLayout
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:gravity="center_horizontal"
+                android:orientation="horizontal"
+                android:weightSum="10"
                 android:paddingTop="5dp">
 
                 <android.support.design.widget.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="16dp"
+                    android:layout_weight="8">
                     <android.support.design.widget.TextInputEditText
                         android:id="@+id/ab_isbn_edit"
-                        android:layout_width="300dp"
+                        android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
                         android:layout_gravity="start"
                         android:hint="@string/hint_isbn"
-                        android:inputType="numberDecimal"
-                        android:paddingLeft="4dp"
-                        android:paddingStart="4dp" />
+                        android:inputType="numberDecimal" />
                 </android.support.design.widget.TextInputLayout>
 
-                <ImageButton
+                <Button
                     android:id="@+id/ab_barcode_scan"
-                    android:layout_width="44dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentLeft="true"
-                    android:layout_alignParentStart="true"
-                    android:layout_centerVertical="true"
-                    android:layout_marginLeft="300dp"
-                    android:layout_marginStart="300dp"
-                    android:layout_marginTop="6dp"
-                    android:background="@null"
-                    android:src="@drawable/ic_photo_camera_white_24dp"
-                    android:tint="@color/colorPrimary" />
-            </RelativeLayout>
+                    android:layout_gravity="end"
+                    android:layout_weight="0.5"
+                    android:background="@drawable/ab_custom_button_green"
+                    android:text="@string/add_book_scan"
+                    android:textColor="#FFFFFF" />
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp">
-
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="8dp"
-                    android:orientation="horizontal">
+                android:layout_marginTop="5dp"
+                android:gravity="center_horizontal"
+                android:weightSum="10">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
+                        android:layout_weight="8"
                         android:text="@string/auto_fill" />
 
                     <Switch
                         android:id="@+id/ab_autofill"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_alignParentRight="true"
                         android:checked="true"
-                        android:gravity="start"
-                        android:paddingRight="-4dp" />
-                </RelativeLayout>
+                        android:gravity="start" />
             </LinearLayout>
 
             <ViewSwitcher xmlns:android="http://schemas.android.com/apk/res/android"
@@ -91,7 +84,8 @@
                     android:id="@+id/ab_autofill_book_view"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:padding="5dp">
 
                     <Button
                         android:id="@+id/ab_start_query"
@@ -186,6 +180,25 @@
                                 android:layout_alignParentRight="true"
                                 android:freezesText="true" />
                         </RelativeLayout>
+
+                        <RelativeLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:padding="4dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/hint_language"
+                                android:textColor="@color/colorTextAccent" />
+
+                            <TextView
+                                android:id="@+id/ab_language"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_alignParentRight="true"
+                                android:freezesText="true" />
+                        </RelativeLayout>
                     </LinearLayout>
                 </LinearLayout>
 
@@ -223,48 +236,98 @@
 
                     </android.support.design.widget.TextInputLayout>
 
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingTop="5dp"
+                        android:weightSum="10">
+
+                        <android.support.design.widget.TextInputLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="8"
+                            android:paddingTop="5dp">
+
+                            <android.support.design.widget.TextInputEditText
+                                android:id="@+id/ab_publisher_edit"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:hint="@string/hint_publisher"
+                                android:inputType="text" />
+
+                        </android.support.design.widget.TextInputLayout>
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="bottom"
+                            android:layout_marginBottom="8dp"
+                            android:layout_weight="2"
+                            android:orientation="vertical"
+                            android:paddingEnd="-2dp"
+                            android:paddingStart="8dp">
+
+                            <TextView
+                                style="@style/InputLabel"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="@string/hint_editionYear" />
+
+                            <Spinner
+                                android:id="@+id/ab_edition_year_edit"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:entries="@array/conditions"
+                                android:prompt="@string/hint_editionYear" />
+                        </LinearLayout>
+                    </LinearLayout>
+
                     <android.support.design.widget.TextInputLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:paddingTop="5dp">
 
                         <android.support.design.widget.TextInputEditText
-                            android:id="@+id/ab_publisher_edit"
+                            android:id="@+id/ab_language_edit"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:hint="@string/hint_publisher"
-                            android:inputType="text" />
-
-                    </android.support.design.widget.TextInputLayout>
-
-                    <android.support.design.widget.TextInputLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:paddingTop="5dp">
-
-                        <android.support.design.widget.TextInputEditText
-                            android:id="@+id/ab_edition_year_edit"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:hint="@string/hint_editionYear"
+                            android:hint="@string/hint_language"
                             android:inputType="numberDecimal" />
 
                     </android.support.design.widget.TextInputLayout>
                 </LinearLayout>
             </ViewSwitcher>
 
-            <android.support.design.widget.TextInputLayout
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingTop="10dp">
+                android:layout_marginBottom="5dp"
+                android:orientation="vertical"
+                android:paddingTop="5dp">
 
-                <android.support.design.widget.TextInputEditText
-                    android:id="@+id/add_book_condition_edit"
+                <TextView
+                    style="@style/InputLabel"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="@string/hint_condition"
-                    android:inputType="text" />
-            </android.support.design.widget.TextInputLayout>
+                    android:text="@string/hint_condition" />
+
+                <Spinner
+                    android:id="@+id/add_book_condition_edit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:entries="@array/conditions"
+                    android:prompt="@string/hint_condition" />
+            </LinearLayout>
+
+            <me.gujun.android.taggroup.TagGroup
+                android:id="@+id/tag_group"
+                style="@style/TagGroup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:focusedByDefault="false"
+                android:inputType="text"
+                android:padding="5dp"
+                app:atg_isAppendMode="true" />
 
             <RelativeLayout
                 android:layout_width="match_parent"

@@ -30,6 +30,7 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
@@ -76,6 +77,9 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
         setContentView(R.layout.activity_barcode_capture);
+        Toolbar toolbar = findViewById(R.id.bc_toolbar);
+
+        setSupportActionBar(toolbar);
 
         mPreview = findViewById(R.id.preview);
         mGraphicOverlay = findViewById(R.id.graphicOverlay);

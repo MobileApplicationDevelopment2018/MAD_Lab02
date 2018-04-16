@@ -91,4 +91,15 @@
     <string name="add_book_isbn_loading_title">Loading</string>
     <string name="add_book_isbn_loading_message">Retrieving ISBN info</string>
     <string name="rescan">Rescan</string>
+    <string name="add_book_scan">Scan</string>
+    <string name="add_book_query_ok">Information retrieved correctly</string>
+    <string name="add_book_saved">Saved</string>
+    <string name="add_book_error">Error</string>
+    <string name="hint_language">Language</string>
+
+    <string name="add_book_condition_mint">Mint</string>
+    <string name="add_book_condition_good">Good</string>
+    <string name="add_book_condition_fair">Fair</string>
+    <string name="add_book_condition_poor">Poor</string>
+    <string name="title_activity_tag_editor">TagEditorActivity</string>
 </resources>

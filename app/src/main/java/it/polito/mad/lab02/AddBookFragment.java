@@ -12,10 +12,11 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,13 +27,16 @@ import com.google.android.gms.vision.barcode.Barcode;
 import com.google.api.services.books.model.Volume;
 import com.google.api.services.books.model.Volumes;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Locale;
 
 import it.polito.mad.lab02.barcodereader.BarcodeCaptureActivity;
 import it.polito.mad.lab02.data.Book;
 import it.polito.mad.lab02.utils.IsbnQuery;
 import it.polito.mad.lab02.utils.Utilities;
+import me.gujun.android.taggroup.TagGroup;
 
 public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener {
 
@@ -93,7 +97,7 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
             }
         });
 
-        ImageButton scanBarcodeBtn = view.findViewById(R.id.ab_barcode_scan);
+        Button scanBarcodeBtn = view.findViewById(R.id.ab_barcode_scan);
         Button addBookBtn = view.findViewById(R.id.ab_add_book);
         Button startQueryBtn = view.findViewById(R.id.ab_start_query);
         Button resetBtn = view.findViewById(R.id.ab_clear_fields);
@@ -138,7 +142,11 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
         });
 
         addBookBtn.setOnClickListener(v -> uploadBook());
-        addBookBtn.setClickable(true);
+
+        fillSpinnerYear(view);
+
+        TagGroup mTagGroup = view.findViewById(R.id.tag_group);
+        mTagGroup.setOnClickListener(v -> ((TagGroup) v.findViewById(R.id.tag_group)).submitTag());
 
         return view;
     }
@@ -170,7 +178,7 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
         } else if (volumes.getTotalItems() == 0 || volumes.getItems() == null) {
             Toast.makeText(getContext(), getResources().getString(R.string.add_book_isbn_query_no_results), Toast.LENGTH_SHORT).show();
         } else {
-            Toast.makeText(getContext(), "Query completed successfully", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), R.string.add_book_query_ok, Toast.LENGTH_SHORT).show();
 
             LinearLayout wrapper = getView().findViewById(R.id.ab_autofilled_info_wrapper);
             final Volume.VolumeInfo volumeInfo = volumes.getItems().get(0).getVolumeInfo();
@@ -269,9 +277,7 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
     }
 
     private void uploadBook() {
-
-        // TODO settarlo nel punto opportuno
-        inAutocomplete = book != null;
+        inAutocomplete = getView().findViewById(R.id.ab_autofilled_info_wrapper).isShown();
 
         if (!inAutocomplete) {
 
@@ -279,12 +285,13 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
             EditText titleEt = getView().findViewById(R.id.ab_title_edit);
             EditText authorEt = getView().findViewById(R.id.ab_author_edit);
             EditText publisherEt = getView().findViewById(R.id.ab_publisher_edit);
+            EditText languageEt = getView().findViewById(R.id.ab_language_edit);
             EditText yearEt = getView().findViewById(R.id.ab_edition_year_edit);
 
             String isbn = isbnEt.getText().toString();
             String title = titleEt.getText().toString();
             String author = authorEt.getText().toString();
-            String language = "TO INSERT";
+            String language = languageEt.getText().toString();
             String publisher = publisherEt.getText().toString();
             int year = Integer.parseInt(yearEt.getText().toString());
 
@@ -294,16 +301,33 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
         }
 
         // TODO: load conditions and tags
+        String condition = ((Spinner) getView().findViewById(R.id.add_book_condition_edit)).getSelectedItem().toString();
+        String[] tags = ((TagGroup) getView().findViewById(R.id.tag_group)).getTags();
 
+        book.setConditions(condition);
+        book.setTags(Arrays.asList(tags));
         book.saveToFirebase(this.getResources())
                 .addOnSuccessListener((v) -> {
                     book = null;
-                    Toast.makeText(getContext(), "SAVED", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), getResources().getString(R.string.add_book_saved), Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener((v) -> {
                     Log.e("tag", v.getMessage());
-                    Toast.makeText(getContext(), "ERROR", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), getResources().getString(R.string.add_book_error), Toast.LENGTH_SHORT).show();
                 });
 
+    }
+
+    private void fillSpinnerYear(View view) {
+        ArrayList<String> years = new ArrayList<>();
+        int thisYear = Calendar.getInstance().get(Calendar.YEAR);
+
+        for (int i = 1900; i <= thisYear; i++)
+            years.add(Integer.toString(i));
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this.getActivity(), android.R.layout.simple_spinner_item, years);
+
+        Spinner spinYear = (Spinner) view.findViewById(R.id.ab_edition_year_edit);
+        spinYear.setAdapter(adapter);
     }
 }

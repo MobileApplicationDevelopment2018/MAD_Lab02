@@ -40,6 +40,7 @@
             android:theme="@style/AppTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -49,7 +50,6 @@
             android:label="@string/edit_profile" />
         <activity
             android:name=".barcodereader.BarcodeCaptureActivity"
-            android:exported="true"
             android:label="@string/scan_barcode"
             android:screenOrientation="portrait" />
     </application>

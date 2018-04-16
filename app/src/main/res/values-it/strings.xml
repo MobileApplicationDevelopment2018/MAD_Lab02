@@ -78,4 +78,14 @@
     <string name="add_book_isbn_loading_title">Caricamento</string>
     <string name="add_book_isbn_loading_message">Sto cercando di ottenere le informazioni collegate all\'ISBN</string>
     <string name="rescan">Nuova Scansione</string>
+    <string name="add_book_scan">Scannerizza</string>
+    <string name="add_book_query_ok">Informazioni ottenute correttamente</string>
+    <string name="add_book_saved">Salvato</string>
+    <string name="add_book_error">Errore</string>
+    <string name="hint_language">Lingua</string>
+
+    <string name="add_book_condition_mint">Perfette</string>
+    <string name="add_book_condition_good">Buone</string>
+    <string name="add_book_condition_fair">Discrete</string>
+    <string name="add_book_condition_poor">Danneggiato</string>
 </resources>
