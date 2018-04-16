@@ -68,6 +68,50 @@ public class Utilities {
                 (Utilities.isNullOrWhitespace(a) && Utilities.isNullOrWhitespace(b));
     }
 
+    public static boolean validateIsbn(String isbn) {
+        if (isbn == null)
+            return false;
+
+        //remove any hyphens
+        isbn = isbn.replaceAll("-", "");
+
+        try {
+            if (isbn.length() == 13) {
+                int tot = 0;
+                for (int i = 0; i < 12; i++) {
+                    int digit = Integer.parseInt(isbn.substring(i, i + 1));
+                    tot += (i % 2 == 0) ? digit : digit * 3;
+                }
+
+                //checksum must be 0-9. If calculated as 10 then = 0
+                int checksum = 10 - (tot % 10);
+                if (checksum == 10) {
+                    checksum = 0;
+                }
+
+                return checksum == Integer.parseInt(isbn.substring(12));
+
+            } else if (isbn.length() == 10) {
+                int tot = 0;
+                for (int i = 0; i < 9; i++) {
+                    int digit = Integer.parseInt(isbn.substring(i, i + 1));
+                    tot += ((10 - i) * digit);
+                }
+
+                String checksum = Integer.toString((11 - (tot % 11)) % 11);
+                if ("10".equals(checksum)) {
+                    checksum = "X";
+                }
+
+                return checksum.equals(isbn.substring(9));
+
+            } else return false;
+
+        } catch (NumberFormatException nfe) {
+            return false;
+        }
+    }
+
     public static void copyFile(File sourceFile, File destFile) throws IOException {
         if (!sourceFile.exists()) {
             return;

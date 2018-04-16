@@ -38,9 +38,7 @@ import it.polito.mad.lab02.utils.GlideRequest;
 import it.polito.mad.lab02.utils.Utilities;
 
 public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
-        implements NavigationView.OnNavigationItemSelectedListener,
-        AddBookFragment.OnFragmentInteractionListener {
-
+        implements NavigationView.OnNavigationItemSelectedListener {
     private static final int RC_SIGN_IN = 1;
     private static final int RC_EDIT_PROFILE = 5;
     private static final int RC_EDIT_PROFILE_WELCOME = 6;
@@ -374,11 +372,6 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
         if (dialog != null) {
             setDialogInstance(dialog);
         }
-    }
-
-    @Override
-    public void onFragmentInteraction() {
-
     }
 
     public enum DialogID {

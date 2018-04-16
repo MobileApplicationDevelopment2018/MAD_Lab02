@@ -1,15 +1,14 @@
 package it.polito.mad.lab02;
 
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
-import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,34 +26,26 @@ import com.google.android.gms.vision.barcode.Barcode;
 import com.google.api.services.books.model.Volume;
 import com.google.api.services.books.model.Volumes;
 
+import java.util.Arrays;
+import java.util.Locale;
+
 import it.polito.mad.lab02.barcodereader.BarcodeCaptureActivity;
+import it.polito.mad.lab02.data.Book;
+import it.polito.mad.lab02.utils.IsbnQuery;
+import it.polito.mad.lab02.utils.Utilities;
 
-
-/**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link AddBookFragment.OnFragmentInteractionListener} interface
- * to handle interaction events.
- * Use the {@link AddBookFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener {
 
     private static final int RC_BARCODE_CAPTURE = 9001;
-
-    private OnFragmentInteractionListener mListener;
 
     private ProgressDialog progressDialog;
     private boolean isTaskRunning;
     private IsbnQuery isbnQuery;
     private int wrapperVisibility;
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @return A new instance of fragment AddBookFragment.
-     */
+    private Book book;
+    private boolean inAutocomplete;
+
     public static AddBookFragment newInstance() {
         AddBookFragment fragment = new AddBookFragment();
         Bundle args = new Bundle();
@@ -90,7 +81,6 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
         ViewSwitcher switcher = view.findViewById(R.id.ab_view_switcher);
 
         Switch autofill = view.findViewById(R.id.ab_autofill);
-
         autofill.setOnCheckedChangeListener((buttonView, isChecked) -> {
             switcher.showNext();
             View currentView = switcher.getCurrentView();
@@ -104,6 +94,7 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
         });
 
         ImageButton scanBarcodeBtn = view.findViewById(R.id.ab_barcode_scan);
+        Button addBookBtn = view.findViewById(R.id.ab_add_book);
         Button startQueryBtn = view.findViewById(R.id.ab_start_query);
         Button resetBtn = view.findViewById(R.id.ab_clear_fields);
         EditText isbnEdit = view.findViewById(R.id.ab_isbn_edit);
@@ -135,7 +126,7 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
 
             @Override
             public void afterTextChanged(Editable s) {
-                if (validateIsbn(isbnEdit.getText().toString())) {
+                if (Utilities.validateIsbn(isbnEdit.getText().toString())) {
                     isbnEdit.setError(null);
                     startQueryBtn.setEnabled(true);
                 } else {
@@ -145,30 +136,15 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
                 }
             }
         });
+
+        addBookBtn.setOnClickListener(v -> uploadBook());
+        addBookBtn.setClickable(true);
+
         return view;
-    }
-
-    // TODO: Rename method, update argument and hook method into UI event
-    public void onButtonPressed() {
-        if (mListener != null) {
-            mListener.onFragmentInteraction();
-        }
-    }
-
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        if (context instanceof OnFragmentInteractionListener) {
-            mListener = (OnFragmentInteractionListener) context;
-        } else {
-            throw new RuntimeException(context.toString()
-                    + " must implement OnFragmentInteractionListener");
-        }
     }
 
     @Override
     public void onDetach() {
-        mListener = null;
         if (progressDialog != null && progressDialog.isShowing()) {
             progressDialog.dismiss();
         }
@@ -195,71 +171,34 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
             Toast.makeText(getContext(), getResources().getString(R.string.add_book_isbn_query_no_results), Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(getContext(), "Query completed successfully", Toast.LENGTH_SHORT).show();
+
             LinearLayout wrapper = getView().findViewById(R.id.ab_autofilled_info_wrapper);
             final Volume.VolumeInfo volumeInfo = volumes.getItems().get(0).getVolumeInfo();
+
+            EditText isbnEdit = getView().findViewById(R.id.ab_isbn_edit);
+            book = new Book(isbnEdit.getText().toString(), volumeInfo);
+
             TextView bookTitle = getView().findViewById(R.id.ab_title);
             TextView bookAuthor = getView().findViewById(R.id.ab_author);
             TextView bookPublisher = getView().findViewById(R.id.ab_publisher);
             TextView bookYear = getView().findViewById(R.id.ab_edition_year);
-            bookTitle.setText(volumeInfo.getTitle());
-            //handle multiple authors
-            String[] authors = new String[volumeInfo.getAuthors().size()];
-            int i = 0;
-            for (String author : volumeInfo.getAuthors())
-                authors[i++] = author;
+
+            bookTitle.setText(book.getTitle());
+            bookAuthor.setText(book.getAuthors("\n"));
+            bookPublisher.setText(book.getPublisher());
+
+            Locale currentLocale = getResources().getConfiguration().locale;
+            bookYear.setText(String.format(currentLocale, "%d", book.getYear()));
+
             wrapperVisibility = View.VISIBLE;
-            bookAuthor.setText(TextUtils.join("\n", authors));
-            bookPublisher.setText(volumeInfo.getPublisher());
-            bookYear.setText(volumeInfo.getPublishedDate());
             wrapper.setVisibility(View.VISIBLE);
+
             getView().findViewById(R.id.ab_add_book).setEnabled(true);
             getView().findViewById(R.id.ab_clear_fields).setEnabled(true);
         }
     }
 
-    private boolean validateIsbn(String isbn) {
-        if (isbn == null)
-            return false;
 
-        //remove any hyphens
-        isbn = isbn.replaceAll("-", "");
-
-        try {
-            if (isbn.length() == 13) {
-                int tot = 0;
-                for (int i = 0; i < 12; i++) {
-                    int digit = Integer.parseInt(isbn.substring(i, i + 1));
-                    tot += (i % 2 == 0) ? digit : digit * 3;
-                }
-
-                //checksum must be 0-9. If calculated as 10 then = 0
-                int checksum = 10 - (tot % 10);
-                if (checksum == 10) {
-                    checksum = 0;
-                }
-
-                return checksum == Integer.parseInt(isbn.substring(12));
-
-            } else if (isbn.length() == 10) {
-                int tot = 0;
-                for (int i = 0; i < 9; i++) {
-                    int digit = Integer.parseInt(isbn.substring(i, i + 1));
-                    tot += ((10 - i) * digit);
-                }
-
-                String checksum = Integer.toString((11 - (tot % 11)) % 11);
-                if ("10".equals(checksum)) {
-                    checksum = "X";
-                }
-
-                return checksum.equals(isbn.substring(9));
-
-            } else return false;
-
-        } catch (NumberFormatException nfe) {
-            return false;
-        }
-    }
 
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
@@ -310,20 +249,6 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
         getView().findViewById(R.id.ab_clear_fields).setEnabled(false);
     }
 
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
-    public interface OnFragmentInteractionListener {
-        void onFragmentInteraction();
-    }
-
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
@@ -341,5 +266,44 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
                     getResources().getString(R.string.add_book_isbn_loading_title),
                     getResources().getString(R.string.add_book_isbn_loading_message));
         }
+    }
+
+    private void uploadBook() {
+
+        // TODO settarlo nel punto opportuno
+        inAutocomplete = book != null;
+
+        if (!inAutocomplete) {
+
+            EditText isbnEt = getView().findViewById(R.id.ab_isbn_edit);
+            EditText titleEt = getView().findViewById(R.id.ab_title_edit);
+            EditText authorEt = getView().findViewById(R.id.ab_author_edit);
+            EditText publisherEt = getView().findViewById(R.id.ab_publisher_edit);
+            EditText yearEt = getView().findViewById(R.id.ab_edition_year_edit);
+
+            String isbn = isbnEt.getText().toString();
+            String title = titleEt.getText().toString();
+            String author = authorEt.getText().toString();
+            String language = "TO INSERT";
+            String publisher = publisherEt.getText().toString();
+            int year = Integer.parseInt(yearEt.getText().toString());
+
+            // TODO perform checks
+
+            book = new Book(isbn, title, Arrays.asList(author), language, publisher, year);
+        }
+
+        // TODO: load conditions and tags
+
+        book.saveToFirebase(this.getResources())
+                .addOnSuccessListener((v) -> {
+                    book = null;
+                    Toast.makeText(getContext(), "SAVED", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener((v) -> {
+                    Log.e("tag", v.getMessage());
+                    Toast.makeText(getContext(), "ERROR", Toast.LENGTH_SHORT).show();
+                });
+
     }
 }

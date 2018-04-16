@@ -1,4 +1,4 @@
-package it.polito.mad.lab02;
+package it.polito.mad.lab02.utils;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
@@ -16,10 +16,14 @@ import com.google.api.services.books.model.Volumes;
 
 import java.io.IOException;
 
-class IsbnQuery extends AsyncTask<String, Object, Volumes> {
+public class IsbnQuery extends AsyncTask<String, Object, Volumes> {
 
     private TaskListener mListener;
     private ConnectivityManager mConnectivityManager;
+
+    public IsbnQuery(TaskListener listener) {
+        mListener = listener;
+    }
 
     @Override
     protected Volumes doInBackground(String... isbns) {
@@ -44,10 +48,6 @@ class IsbnQuery extends AsyncTask<String, Object, Volumes> {
 
         return volumes;
 
-    }
-
-    public IsbnQuery(TaskListener listener) {
-        mListener = listener;
     }
 
     @Override
