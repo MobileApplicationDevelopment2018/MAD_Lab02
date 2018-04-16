@@ -279,8 +279,11 @@ public class UserProfile implements Serializable {
                 .build();
 
         return getProfilePictureReferenceFirebase()
-                .putBytes(picture.toByteArray(), metadata)
-                .addOnSuccessListener(t -> this.localImagePath = null);
+                .putBytes(picture.toByteArray(), metadata);
+    }
+
+    public void postCommit() {
+        this.localImagePath = null;
     }
 
     public interface OnDataLoadSuccess {

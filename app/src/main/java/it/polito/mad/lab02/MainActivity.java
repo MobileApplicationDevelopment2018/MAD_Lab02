@@ -207,6 +207,10 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
 
     private void updateNavigationView() {
 
+        if (this.isDestroyed()) {
+            return;
+        }
+
         NavigationView drawer = findViewById(R.id.nav_view);
         View header = drawer.getHeaderView(0);
 
@@ -288,7 +292,9 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
         this.openDialog(DialogID.DIALOG_LOADING, false);
 
         this.profileListener = UserProfile.setOnProfileLoadedListener(data -> {
-            this.unsetOnProfileLoadedListener();
+            if (!this.unsetOnProfileLoadedListener()) {
+                return;
+            }
             closeDialog();
 
             if (data == null) {
@@ -300,17 +306,21 @@ public class MainActivity extends AppCompatActivityDialog<MainActivity.DialogID>
             }
 
         }, error -> {
-            this.unsetOnProfileLoadedListener();
+            if (!this.unsetOnProfileLoadedListener()) {
+                return;
+            }
             openDialog(DialogID.DIALOG_ERROR_RETRIEVE_DIALOG, true);
             signOut();
         });
     }
 
-    public void unsetOnProfileLoadedListener() {
+    public boolean unsetOnProfileLoadedListener() {
         if (this.profileListener != null) {
             UserProfile.unsetOnProfileLoadedListener(this.profileListener);
             this.profileListener = null;
+            return true;
         }
+        return false;
     }
 
     private void completeRegistration() {

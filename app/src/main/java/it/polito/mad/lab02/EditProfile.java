@@ -298,6 +298,7 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
 
             OnSuccessListener<List<?>> onSuccess = t -> {
                 isCommitting = false;
+                currentProfile.postCommit();
                 Intent intent = new Intent(getApplicationContext(), ShowProfileFragment.class);
                 intent.putExtra(UserProfile.PROFILE_INFO_KEY, currentProfile);
                 setResult(RESULT_OK, intent);
