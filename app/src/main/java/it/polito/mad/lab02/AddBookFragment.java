@@ -8,7 +8,6 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -46,9 +45,16 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
     private boolean isTaskRunning;
     private IsbnQuery isbnQuery;
     private int wrapperVisibility;
-
     private Book book;
     private boolean inAutocomplete;
+    private TextView bookTitle, bookAuthor, bookPublisher, bookYear, bookLanguage;
+    private EditText isbnEdit, titleEt, authorEt, publisherEt, languageEt;
+    private Spinner yearEt;
+    private Button scanBarcodeBtn, addBookBtn, resetBtn, startQueryBtn, addBookBtnNoAuto, resetBtnNoAuto;
+    private Locale currentLocale;
+    private TagGroup mTagGroup;
+    private Switch autofill;
+    private ViewSwitcher switcher;
 
     public static AddBookFragment newInstance() {
         AddBookFragment fragment = new AddBookFragment();
@@ -70,39 +76,28 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
 
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_add_book, container, false);
-
+        findViews(view);
         if (savedInstanceState == null) {
             wrapperVisibility = View.GONE;
         } else {
             wrapperVisibility = savedInstanceState.getInt("wrapperVisibility");
-            view.findViewById(R.id.ab_add_book).setEnabled(true);
-            view.findViewById(R.id.ab_clear_fields).setEnabled(true);
+            addBookBtn.setEnabled(true);
         }
 
         LinearLayout wrapper = view.findViewById(R.id.ab_autofilled_info_wrapper);
         wrapper.setVisibility(wrapperVisibility);
 
-        ViewSwitcher switcher = view.findViewById(R.id.ab_view_switcher);
-
-        Switch autofill = view.findViewById(R.id.ab_autofill);
         autofill.setOnCheckedChangeListener((buttonView, isChecked) -> {
             switcher.showNext();
             View currentView = switcher.getCurrentView();
             if (currentView.getId() == R.id.ab_autofill_book_view && wrapperVisibility == View.VISIBLE) {
-                view.findViewById(R.id.ab_add_book).setEnabled(true);
-                view.findViewById(R.id.ab_clear_fields).setEnabled(true);
+                addBookBtn.setEnabled(true);
             } else {
-                view.findViewById(R.id.ab_add_book).setEnabled(false);
-                view.findViewById(R.id.ab_clear_fields).setEnabled(false);
+                addBookBtn.setEnabled(false);
             }
         });
 
-        Button scanBarcodeBtn = view.findViewById(R.id.ab_barcode_scan);
-        Button addBookBtn = view.findViewById(R.id.ab_add_book);
-        Button startQueryBtn = view.findViewById(R.id.ab_start_query);
-        Button resetBtn = view.findViewById(R.id.ab_clear_fields);
-        EditText isbnEdit = view.findViewById(R.id.ab_isbn_edit);
-
+        // Buttons watchers
         scanBarcodeBtn.setOnClickListener((view3) -> {
             // launch barcode activity.
             Intent intent = new Intent(this.getContext(), BarcodeCaptureActivity.class);
@@ -117,7 +112,14 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
         });
 
         resetBtn.setOnClickListener(v -> clearViews());
+        addBookBtn.setOnClickListener(v -> uploadBook());
+        resetBtnNoAuto.setOnClickListener(v -> clearViews());
+        addBookBtnNoAuto.setOnClickListener(v -> uploadBook());
 
+        // Tag watcher
+        mTagGroup.setOnClickListener(v -> ((TagGroup) v.findViewById(R.id.tag_group)).submitTag());
+
+        // Fields watchers
         isbnEdit.addTextChangedListener(new TextWatcher() {
 
             @Override
@@ -133,20 +135,20 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
                 if (Utilities.validateIsbn(isbnEdit.getText().toString())) {
                     isbnEdit.setError(null);
                     startQueryBtn.setEnabled(true);
+                    addBookBtn.setEnabled(true);
+                    addBookBtnNoAuto.setEnabled(true);
                 } else {
                     if (isbnEdit.getText().length() != 0)
                         isbnEdit.setError(getString(R.string.add_book_invalid_isbn));
                     startQueryBtn.setEnabled(false);
+                    addBookBtn.setEnabled(true);
+                    addBookBtnNoAuto.setEnabled(false);
                 }
             }
         });
 
-        addBookBtn.setOnClickListener(v -> uploadBook());
-
         fillSpinnerYear(view);
-
-        TagGroup mTagGroup = view.findViewById(R.id.tag_group);
-        mTagGroup.setOnClickListener(v -> ((TagGroup) v.findViewById(R.id.tag_group)).submitTag());
+        currentLocale = getResources().getConfiguration().locale;
 
         return view;
     }
@@ -183,30 +185,18 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
             LinearLayout wrapper = getView().findViewById(R.id.ab_autofilled_info_wrapper);
             final Volume.VolumeInfo volumeInfo = volumes.getItems().get(0).getVolumeInfo();
 
-            EditText isbnEdit = getView().findViewById(R.id.ab_isbn_edit);
-            book = new Book(isbnEdit.getText().toString(), volumeInfo);
+            isbnEdit = getView().findViewById(R.id.ab_isbn_edit);
+            String language = new Locale(volumeInfo.getLanguage()).getDisplayLanguage(currentLocale);
+            book = new Book(isbnEdit.getText().toString(), volumeInfo, language);
 
-            TextView bookTitle = getView().findViewById(R.id.ab_title);
-            TextView bookAuthor = getView().findViewById(R.id.ab_author);
-            TextView bookPublisher = getView().findViewById(R.id.ab_publisher);
-            TextView bookYear = getView().findViewById(R.id.ab_edition_year);
-
-            bookTitle.setText(book.getTitle());
-            bookAuthor.setText(book.getAuthors("\n"));
-            bookPublisher.setText(book.getPublisher());
-
-            Locale currentLocale = getResources().getConfiguration().locale;
-            bookYear.setText(String.format(currentLocale, "%d", book.getYear()));
+            fillViewsAutofilled(book);
 
             wrapperVisibility = View.VISIBLE;
             wrapper.setVisibility(View.VISIBLE);
 
-            getView().findViewById(R.id.ab_add_book).setEnabled(true);
-            getView().findViewById(R.id.ab_clear_fields).setEnabled(true);
+            addBookBtn.setEnabled(true);
         }
     }
-
-
 
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
@@ -226,6 +216,7 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
                         clearViews();
 
                     ((EditText) getView().findViewById(R.id.ab_isbn_edit)).setText(barcode.displayValue);
+                    addBookBtnNoAuto.setEnabled(true);
                 }
             } else {
                 Toast.makeText(this.getContext(), String.format(getString(R.string.barcode_error), CommonStatusCodes.getStatusCodeString(resultCode)), Toast.LENGTH_SHORT);
@@ -236,25 +227,18 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
     }
 
     private void clearViews() {
-        TextView bookTitle = getView().findViewById(R.id.ab_title);
-        TextView bookAuthor = getView().findViewById(R.id.ab_author);
-        TextView bookPublisher = getView().findViewById(R.id.ab_publisher);
-        TextView bookYear = getView().findViewById(R.id.ab_edition_year);
-
         bookTitle.setText("");
         bookAuthor.setText("");
         bookPublisher.setText("");
         bookYear.setText("");
-
-        ((EditText) getView().findViewById(R.id.ab_isbn_edit)).setText("");
+        isbnEdit.setText("");
 
         LinearLayout wrapper = getView().findViewById(R.id.ab_autofilled_info_wrapper);
 
         wrapperVisibility = View.GONE;
         wrapper.setVisibility(wrapperVisibility);
 
-        getView().findViewById(R.id.ab_add_book).setEnabled(false);
-        getView().findViewById(R.id.ab_clear_fields).setEnabled(false);
+        addBookBtn.setEnabled(false);
     }
 
     @Override
@@ -280,27 +264,27 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
         inAutocomplete = getView().findViewById(R.id.ab_autofilled_info_wrapper).isShown();
 
         if (!inAutocomplete) {
-
-            EditText isbnEt = getView().findViewById(R.id.ab_isbn_edit);
-            EditText titleEt = getView().findViewById(R.id.ab_title_edit);
-            EditText authorEt = getView().findViewById(R.id.ab_author_edit);
-            EditText publisherEt = getView().findViewById(R.id.ab_publisher_edit);
-            EditText languageEt = getView().findViewById(R.id.ab_language_edit);
-            EditText yearEt = getView().findViewById(R.id.ab_edition_year_edit);
-
-            String isbn = isbnEt.getText().toString();
+            String isbn = isbnEdit.getText().toString();
             String title = titleEt.getText().toString();
             String author = authorEt.getText().toString();
             String language = languageEt.getText().toString();
             String publisher = publisherEt.getText().toString();
-            int year = Integer.parseInt(yearEt.getText().toString());
+            int year = Integer.parseInt(yearEt.getSelectedItem().toString());
 
-            // TODO perform checks
+            if (checkMandatoryFieldsInput(title, author)) {
+                title = Utilities.trimString(title, titleEt.length());
+                author = Utilities.trimString(author, authorEt.length());
+                language = Utilities.trimString(language, titleEt.length());
+                publisher = Utilities.trimString(publisher, publisherEt.length());
 
-            book = new Book(isbn, title, Arrays.asList(author), language, publisher, year);
+                book = new Book(isbn, title, Arrays.asList(author), language, publisher, year);
+            } else {
+                Toast.makeText(getContext(), getResources().getString(R.string.add_book_error), Toast.LENGTH_SHORT).show();
+                return;
+            }
+
         }
 
-        // TODO: load conditions and tags
         String condition = ((Spinner) getView().findViewById(R.id.add_book_condition_edit)).getSelectedItem().toString();
         String[] tags = ((TagGroup) getView().findViewById(R.id.tag_group)).getTags();
 
@@ -312,10 +296,53 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
                     Toast.makeText(getContext(), getResources().getString(R.string.add_book_saved), Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener((v) -> {
-                    Log.e("tag", v.getMessage());
                     Toast.makeText(getContext(), getResources().getString(R.string.add_book_error), Toast.LENGTH_SHORT).show();
                 });
 
+    }
+
+    private void findViews(View view) {
+        // Buttons
+        scanBarcodeBtn = view.findViewById(R.id.ab_barcode_scan);
+        addBookBtn = view.findViewById(R.id.ab_add_book);
+        startQueryBtn = view.findViewById(R.id.ab_start_query);
+        resetBtn = view.findViewById(R.id.ab_clear_fields);
+        addBookBtnNoAuto = view.findViewById(R.id.ab_add_book_no_autofill);
+        resetBtnNoAuto = view.findViewById(R.id.ab_clear_fields_no_autofill);
+
+        // Isbn view
+        isbnEdit = view.findViewById(R.id.ab_isbn_edit);
+
+        // Autofilled views
+        bookTitle = view.findViewById(R.id.ab_title);
+        bookAuthor = view.findViewById(R.id.ab_author);
+        bookPublisher = view.findViewById(R.id.ab_publisher);
+        bookYear = view.findViewById(R.id.ab_edition_year);
+        bookLanguage = view.findViewById(R.id.ab_language);
+
+        // User-filled views
+        titleEt = view.findViewById(R.id.ab_title_edit);
+        authorEt = view.findViewById(R.id.ab_author_edit);
+        publisherEt = view.findViewById(R.id.ab_publisher_edit);
+        languageEt = view.findViewById(R.id.ab_language_edit);
+        yearEt = view.findViewById(R.id.ab_edition_year_edit);
+
+        // Tags
+        mTagGroup = view.findViewById(R.id.tag_group);
+
+        // Autofill
+        autofill = view.findViewById(R.id.ab_autofill);
+
+        // View Switcher
+        switcher = view.findViewById(R.id.ab_view_switcher);
+    }
+
+    private void fillViewsAutofilled(Book book) {
+        bookTitle.setText(book.getTitle());
+        bookAuthor.setText(book.getAuthors("\n"));
+        bookPublisher.setText(book.getPublisher());
+        bookYear.setText(String.format(currentLocale, "%d", book.getYear()));
+        bookLanguage.setText(book.getLanguage());
     }
 
     private void fillSpinnerYear(View view) {
@@ -329,5 +356,22 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
 
         Spinner spinYear = (Spinner) view.findViewById(R.id.ab_edition_year_edit);
         spinYear.setAdapter(adapter);
+    }
+
+    private boolean checkMandatoryFieldsInput(String title, String author) {
+        titleEt.setError(null);
+        authorEt.setError(null);
+
+        if (Utilities.isNullOrWhitespace(title)) {
+            titleEt.setError(getResources().getString(R.string.ab_field_must_not_be_empty));
+            return false;
+        }
+
+        if (Utilities.isNullOrWhitespace(author)) {
+            authorEt.setError(getResources().getString(R.string.ab_field_must_not_be_empty));
+            return false;
+        }
+
+        return true;
     }
 }

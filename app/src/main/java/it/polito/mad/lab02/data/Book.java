@@ -26,12 +26,12 @@ public class Book implements Serializable {
         this.data = data;
     }
 
-    public Book(@NonNull String isbn, @NonNull Volume.VolumeInfo volumeInfo) {
+    public Book(@NonNull String isbn, @NonNull Volume.VolumeInfo volumeInfo, String language) {
         this.data = new Data();
         this.data.bookInfo.isbn = isbn;
         this.data.bookInfo.title = volumeInfo.getTitle();
         this.data.bookInfo.authors = volumeInfo.getAuthors();
-        this.data.bookInfo.language = volumeInfo.getLanguage();
+        this.data.bookInfo.language = language;
         this.data.bookInfo.publisher = volumeInfo.getPublisher();
 
         String year = volumeInfo.getPublishedDate();

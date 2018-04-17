@@ -166,16 +166,21 @@
                 android:textAlignment="textEnd" />
         </LinearLayout>
 
-        <me.gujun.android.taggroup.TagGroup
-            android:id="@+id/tag_group"
-            style="@style/TagGroup"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="16dp"
-            android:focusedByDefault="false"
-            android:inputType="text"
-            app:atg_isAppendMode="true" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:orientation="vertical">
+
+            <me.gujun.android.taggroup.TagGroup
+                android:id="@+id/tag_group"
+                style="@style/TagGroup"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="16dp"
+                android:inputType="text"
+                android:maxLength="@integer/max_length_tag"
+                app:atg_isAppendMode="true" />
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="wrap_content"

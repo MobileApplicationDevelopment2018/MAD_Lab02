@@ -87,5 +87,6 @@
     <string name="add_book_condition_mint">Perfette</string>
     <string name="add_book_condition_good">Buone</string>
     <string name="add_book_condition_fair">Discrete</string>
-    <string name="add_book_condition_poor">Danneggiato</string>
+    <string name="add_book_condition_poor">Pessime</string>
+    <string name="ab_field_must_not_be_empty">Questa campo non può essere vuoto</string>
 </resources>
