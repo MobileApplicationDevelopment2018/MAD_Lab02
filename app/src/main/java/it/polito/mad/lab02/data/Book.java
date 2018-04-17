@@ -48,6 +48,9 @@ public class Book implements Serializable {
         if (year != null && year.length() >= 4) {
             this.data.bookInfo.year = Integer.parseInt(year.substring(0, 4));
         }
+
+        for (String category : volumeInfo.getCategories())
+            this.data.bookInfo.tags.add(String.format(locale, "%s", category));
     }
 
     public Book(String isbn, @NonNull String title, @NonNull List<String> authors, @NonNull String language,
@@ -160,7 +163,7 @@ public class Book implements Serializable {
                 this.publisher = null;
                 this.year = INITIAL_YEAR;
                 this.conditions = null;
-                this.tags = null;
+                this.tags = new LinkedList<>();
             }
         }
     }

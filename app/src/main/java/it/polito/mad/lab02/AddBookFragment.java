@@ -274,6 +274,7 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
         }
         yearSpinner.setSelection(selection);
         languageEt.setText(book.getLanguage());
+        tagGroup.setTags(book.getTags());
     }
 
     private void fillSpinnerYear(View view) {
