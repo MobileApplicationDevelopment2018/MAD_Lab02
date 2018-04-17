@@ -25,6 +25,7 @@ import com.google.api.services.books.model.Volumes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
@@ -43,10 +44,10 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
     private boolean isTaskRunning;
     private IsbnQuery isbnQuery;
 
-    private EditText isbnEdit, titleEt, authorEt, publisherEt, languageEt;
+    private EditText isbnEdit, titleEt, publisherEt, languageEt;
     private Spinner yearSpinner, conditionSpinner;
     private Button scanBarcodeBtn, addBookBtn, resetBtn, autocompleteBtn;
-    private TagGroup tagGroup;
+    private TagGroup tagGroup, authorEtGroup;
 
     private Locale currentLocale;
 
@@ -205,28 +206,28 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
         }
 
         titleEt.setText(null);
-        authorEt.setText(null);
+        authorEtGroup.setTags(new LinkedList<>());
         publisherEt.setText(null);
         yearSpinner.setSelection(0);
         languageEt.setText(null);
+        tagGroup.setTags(new LinkedList<>());
     }
 
     private void uploadBook() {
 
         String isbn = isbnEdit.getText().toString();
         String title = titleEt.getText().toString();
-        String author = authorEt.getText().toString();
+        String[] authors = authorEtGroup.getTags();
         String language = languageEt.getText().toString();
         String publisher = publisherEt.getText().toString();
         int year = Integer.parseInt(yearSpinner.getSelectedItem().toString());
 
-        if (!checkMandatoryFieldsInput(isbn, title, author)) {
+        if (!checkMandatoryFieldsInput(isbn, title, authors))
             return;
-        }
 
         String condition = conditionSpinner.getSelectedItem().toString();
         List<String> tags = Arrays.asList(tagGroup.getTags());
-        Book book = new Book(isbn, title, Arrays.asList(author), language, publisher, year,
+        Book book = new Book(isbn, title, Arrays.asList(authors), language, publisher, year,
                 condition, tags, getResources());
 
         book.saveToFirebase()
@@ -250,7 +251,7 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
 
         // User-filled views
         titleEt = view.findViewById(R.id.ab_title_edit);
-        authorEt = view.findViewById(R.id.ab_author_edit);
+        authorEtGroup = view.findViewById(R.id.tag_group_authors);
         publisherEt = view.findViewById(R.id.ab_publisher_edit);
         languageEt = view.findViewById(R.id.ab_language_edit);
         yearSpinner = view.findViewById(R.id.ab_edition_year_edit);
@@ -264,8 +265,8 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
         clearViews(false);
 
         titleEt.setText(book.getTitle());
-        authorEt.setText(book.getAuthors("\n"));
         publisherEt.setText(book.getPublisher());
+        authorEtGroup.setTags(book.getAuthors());
 
         int selection = book.getYear() - Book.INITIAL_YEAR;
         if (selection < 0) {
@@ -290,20 +291,22 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
         spinYear.setAdapter(adapter);
     }
 
-    private boolean checkMandatoryFieldsInput(String isbn, String title, String author) {
+    private boolean checkMandatoryFieldsInput(String isbn, String title, String[] authors) {
         titleEt.setError(null);
-        authorEt.setError(null);
 
         boolean ok = true;
 
         if (Utilities.isNullOrWhitespace(title)) {
-            titleEt.setError(getResources().getString(R.string.ab_field_must_not_be_empty));
+            Toast.makeText(getContext(), getResources().getString(R.string.ab_field_must_not_be_empty), Toast.LENGTH_LONG).show();
             ok = false;
         }
 
-        if (Utilities.isNullOrWhitespace(author)) {
-            authorEt.setError(getResources().getString(R.string.ab_field_must_not_be_empty));
-            ok = false;
+        for (String author : authors) {
+            if (Utilities.isNullOrWhitespace(author)) {
+                Toast.makeText(getContext(), getResources().getString(R.string.ab_field_must_not_be_empty), Toast.LENGTH_LONG).show();
+                ok = false;
+                break;
+            }
         }
 
         return ok && isbn.length() == 0 || Utilities.validateIsbn(isbn);

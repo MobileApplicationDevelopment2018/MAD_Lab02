@@ -73,91 +73,6 @@
 
             </android.support.design.widget.TextInputLayout>
 
-            <android.support.design.widget.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingTop="5dp"
-                app:counterEnabled="true"
-                app:counterMaxLength="@integer/max_length_author">
-
-                <android.support.design.widget.TextInputEditText
-                    android:id="@+id/ab_author_edit"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="@string/hint_author"
-                    android:inputType="text"
-                    android:maxLength="@integer/max_length_author" />
-
-            </android.support.design.widget.TextInputLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingTop="5dp"
-                android:weightSum="10">
-
-                <android.support.design.widget.TextInputLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="8"
-                    android:paddingTop="5dp"
-                    app:counterEnabled="true"
-                    app:counterMaxLength="@integer/max_length_publisher">
-
-                    <android.support.design.widget.TextInputEditText
-                        android:id="@+id/ab_publisher_edit"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="@string/hint_publisher"
-                        android:inputType="text"
-                        android:maxLength="@integer/max_length_publisher" />
-
-                </android.support.design.widget.TextInputLayout>
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="bottom"
-                    android:layout_marginBottom="8dp"
-                    android:layout_weight="2"
-                    android:orientation="vertical"
-                    android:paddingBottom="24dp"
-                    android:paddingEnd="-2dp"
-                    android:paddingStart="8dp">
-
-                    <TextView
-                        style="@style/InputLabel"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/hint_editionYear" />
-
-                    <Spinner
-                        android:id="@+id/ab_edition_year_edit"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="end"
-                        android:prompt="@string/hint_editionYear"
-                        android:textAlignment="textEnd" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <android.support.design.widget.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingTop="5dp"
-                app:counterEnabled="true"
-                app:counterMaxLength="@integer/max_length_language">
-
-                <android.support.design.widget.TextInputEditText
-                    android:id="@+id/ab_language_edit"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="@string/hint_language"
-                    android:inputType="numberDecimal"
-                    android:maxLength="@integer/max_length_language" />
-
-            </android.support.design.widget.TextInputLayout>
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -171,17 +86,106 @@
                     android:layout_marginEnd="16dp"
                     android:paddingEnd="4dp"
                     android:paddingStart="4dp"
-                    android:text="@string/hint_condition" />
+                    android:text="@string/hint_author" />
 
-                <Spinner
-                    android:id="@+id/ab_conditions"
+                <me.gujun.android.taggroup.TagGroup
+                    android:id="@+id/tag_group_authors"
+                    style="@style/TagGroup.Large"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
                     android:layout_weight="1"
-                    android:entries="@array/conditions"
-                    android:gravity="end"
-                    android:prompt="@string/hint_condition"
-                    android:textAlignment="textEnd" />
+                    android:inputType="text"
+                    android:maxLength="@integer/max_length_author"
+                    android:padding="16dp"
+                    app:atg_inputHint="@string/hint_author_add"
+                    app:atg_isAppendMode="true" />
+            </LinearLayout>
+
+            <android.support.design.widget.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="7"
+                android:paddingTop="5dp"
+                app:counterEnabled="true"
+                app:counterMaxLength="@integer/max_length_publisher">
+
+                <android.support.design.widget.TextInputEditText
+                    android:id="@+id/ab_publisher_edit"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/hint_publisher"
+                    android:inputType="text"
+                    android:maxLength="@integer/max_length_publisher" />
+
+            </android.support.design.widget.TextInputLayout>
+
+            <android.support.design.widget.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="5dp"
+                app:counterEnabled="true"
+                app:counterMaxLength="@integer/max_length_language">
+
+                <android.support.design.widget.TextInputEditText
+                    android:id="@+id/ab_language_edit"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/hint_language"
+                    android:inputType="text"
+                    android:maxLength="@integer/max_length_language" />
+
+            </android.support.design.widget.TextInputLayout>
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:weightSum="2"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        style="@style/InputLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/hint_editionYear" />
+
+                    <Spinner
+                        android:id="@+id/ab_edition_year_edit"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="end"
+                        android:prompt="@string/hint_editionYear"
+                        android:textAlignment="textEnd" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        style="@style/InputLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/hint_condition" />
+
+                    <Spinner
+                        android:id="@+id/ab_conditions"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:entries="@array/conditions"
+                        android:gravity="end"
+                        android:prompt="@string/hint_condition"
+                        android:textAlignment="textEnd" />
+                </LinearLayout>
             </LinearLayout>
 
             <LinearLayout
@@ -209,6 +213,7 @@
                     android:inputType="text"
                     android:maxLength="@integer/max_length_tag"
                     android:padding="16dp"
+                    app:atg_inputHint="@string/ab_add_tag"
                     app:atg_isAppendMode="true" />
             </LinearLayout>
 

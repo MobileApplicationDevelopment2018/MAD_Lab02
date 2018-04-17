@@ -93,8 +93,8 @@
     <string name="rescan">Rescan</string>
     <string name="add_book_scan">Scan</string>
     <string name="add_book_query_ok">Information retrieved correctly</string>
-    <string name="add_book_saved">Saved</string>
-    <string name="add_book_error">Error</string>
+    <string name="add_book_saved">Book saved correctly</string>
+    <string name="add_book_error">I was not able to save book information</string>
     <string name="hint_language">Language</string>
 
     <string name="add_book_condition_mint">Mint</string>
@@ -102,7 +102,9 @@
     <string name="add_book_condition_fair">Fair</string>
     <string name="add_book_condition_poor">Poor</string>
     <string name="title_activity_tag_editor">TagEditorActivity</string>
-    <string name="ab_field_must_not_be_empty">This field must not be empty</string>
+    <string name="ab_field_must_not_be_empty">Fields title and author must not be empty</string>
     <string name="autocomplete">Autocomplete</string>
     <string name="hint_tags">Tags</string>
+    <string name="hint_author_add">Add author</string>
+    <string name="ab_add_tag">Add Tag</string>
 </resources>

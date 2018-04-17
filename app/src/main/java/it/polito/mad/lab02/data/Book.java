@@ -13,6 +13,7 @@ import com.google.firebase.database.FirebaseDatabase;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
@@ -54,10 +55,11 @@ public class Book implements Serializable {
                 @NonNull Resources resources) {
         this.data = new Data();
 
+        for (String author : authors)
+            this.data.bookInfo.authors.add(Utilities.trimString(author, resources.getInteger(R.integer.max_length_author)));
+
         this.data.bookInfo.isbn = isbn;
         this.data.bookInfo.title = Utilities.trimString(title, resources.getInteger(R.integer.max_length_title));
-        //TODO: trim authors
-        this.data.bookInfo.authors = authors;
         this.data.bookInfo.language = Utilities.trimString(language, resources.getInteger(R.integer.max_length_language));
         this.data.bookInfo.publisher = Utilities.trimString(publisher, resources.getInteger(R.integer.max_length_publisher));
         this.data.bookInfo.year = year;
@@ -153,7 +155,7 @@ public class Book implements Serializable {
             public BookInfo() {
                 this.isbn = null;
                 this.title = null;
-                this.authors = null;
+                this.authors = new LinkedList<>();
                 this.language = null;
                 this.publisher = null;
                 this.year = INITIAL_YEAR;
