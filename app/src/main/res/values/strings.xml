@@ -103,4 +103,6 @@
     <string name="add_book_condition_poor">Poor</string>
     <string name="title_activity_tag_editor">TagEditorActivity</string>
     <string name="ab_field_must_not_be_empty">This field must not be empty</string>
+    <string name="autocomplete">Autocomplete</string>
+    <string name="hint_tags">Tags</string>
 </resources>

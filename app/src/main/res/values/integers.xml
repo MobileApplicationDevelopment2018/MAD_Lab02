@@ -9,4 +9,5 @@
     <integer name="max_length_publisher">140</integer>
     <integer name="max_length_language">30</integer>
     <integer name="max_length_tag">30</integer>
+    <integer name="max_length_isbn">13</integer>
 </resources>

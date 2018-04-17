@@ -88,5 +88,7 @@
     <string name="add_book_condition_good">Buone</string>
     <string name="add_book_condition_fair">Discrete</string>
     <string name="add_book_condition_poor">Pessime</string>
-    <string name="ab_field_must_not_be_empty">Questa campo non può essere vuoto</string>
+    <string name="ab_field_must_not_be_empty">Questo campo non può essere vuoto</string>
+    <string name="autocomplete">Autocompletamento</string>
+    <string name="hint_tags">Tags</string>
 </resources>

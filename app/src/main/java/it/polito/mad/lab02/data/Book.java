@@ -14,8 +14,13 @@ import com.google.firebase.database.FirebaseDatabase;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+
+import it.polito.mad.lab02.R;
+import it.polito.mad.lab02.utils.Utilities;
 
 public class Book implements Serializable {
+    public static final int INITIAL_YEAR = 1900;
     private static final String FIREBASE_BOOKS_KEY = "books";
     private static final String FIREBASE_DATA_KEY = "data";
     private static final String FIREBASE_BOOK_INFO_KEY = "book_info";
@@ -26,13 +31,17 @@ public class Book implements Serializable {
         this.data = data;
     }
 
-    public Book(@NonNull String isbn, @NonNull Volume.VolumeInfo volumeInfo, String language) {
+    public Book(@NonNull String isbn, @NonNull Volume.VolumeInfo volumeInfo, Locale locale) {
         this.data = new Data();
         this.data.bookInfo.isbn = isbn;
         this.data.bookInfo.title = volumeInfo.getTitle();
         this.data.bookInfo.authors = volumeInfo.getAuthors();
-        this.data.bookInfo.language = language;
         this.data.bookInfo.publisher = volumeInfo.getPublisher();
+
+        if (volumeInfo.getLanguage() != null) {
+            this.data.bookInfo.language = new Locale(volumeInfo.getLanguage())
+                    .getDisplayLanguage(locale);
+        }
 
         String year = volumeInfo.getPublishedDate();
         if (year != null && year.length() >= 4) {
@@ -41,14 +50,20 @@ public class Book implements Serializable {
     }
 
     public Book(String isbn, @NonNull String title, @NonNull List<String> authors, @NonNull String language,
-                String publisher, int year) {
+                String publisher, int year, String conditions, @NonNull List<String> tags,
+                @NonNull Resources resources) {
         this.data = new Data();
+
         this.data.bookInfo.isbn = isbn;
-        this.data.bookInfo.title = title;
+        this.data.bookInfo.title = Utilities.trimString(title, resources.getInteger(R.integer.max_length_title));
+        //TODO: trim authors
         this.data.bookInfo.authors = authors;
-        this.data.bookInfo.language = language;
-        this.data.bookInfo.publisher = publisher;
+        this.data.bookInfo.language = Utilities.trimString(language, resources.getInteger(R.integer.max_length_language));
+        this.data.bookInfo.publisher = Utilities.trimString(publisher, resources.getInteger(R.integer.max_length_publisher));
         this.data.bookInfo.year = year;
+
+        this.data.bookInfo.conditions = conditions;
+        this.data.bookInfo.tags = tags;
     }
 
     public String getIsbn() {
@@ -83,25 +98,11 @@ public class Book implements Serializable {
         return this.data.bookInfo.conditions;
     }
 
-    public void setConditions(@NonNull String conditions) {
-        this.data.bookInfo.conditions = conditions;
-    }
-
     public List<String> getTags() {
         return this.data.bookInfo.tags;
     }
 
-    public void setTags(@NonNull List<String> tags) {
-        this.data.bookInfo.tags = tags;
-    }
-
-    private void trimFields(@NonNull Resources resources) {
-        // TODO: trim blank spaces, etc. ?
-    }
-
-    public Task<?> saveToFirebase(@NonNull Resources resources) {
-        this.trimFields(resources);
-
+    public Task<?> saveToFirebase() {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         assert currentUser != null;
 
@@ -155,7 +156,7 @@ public class Book implements Serializable {
                 this.authors = null;
                 this.language = null;
                 this.publisher = null;
-                this.year = 1900;
+                this.year = INITIAL_YEAR;
                 this.conditions = null;
                 this.tags = null;
             }
