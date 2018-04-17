@@ -215,6 +215,9 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
 
     private void uploadBook() {
 
+        authorEtGroup.submitTag();
+        tagGroup.submitTag();
+
         String isbn = isbnEdit.getText().toString();
         String title = titleEt.getText().toString();
         String[] authors = authorEtGroup.getTags();
@@ -232,10 +235,11 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
 
         book.saveToFirebase()
                 .addOnSuccessListener((v) -> {
-                    Toast.makeText(getContext(), getResources().getString(R.string.add_book_saved), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), getResources().getString(R.string.add_book_saved), Toast.LENGTH_LONG).show();
                     clearViews(true);
                 })
-                .addOnFailureListener((v) -> Toast.makeText(getContext(), getResources().getString(R.string.add_book_error), Toast.LENGTH_SHORT).show());
+                .addOnFailureListener((v) -> Toast.makeText(getContext(), getResources().getString(R.string.add_book_error),
+                        Toast.LENGTH_LONG).show());
 
     }
 
@@ -292,23 +296,22 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
     }
 
     private boolean checkMandatoryFieldsInput(String isbn, String title, String[] authors) {
-        titleEt.setError(null);
 
         boolean ok = true;
-
-        if (Utilities.isNullOrWhitespace(title)) {
-            Toast.makeText(getContext(), getResources().getString(R.string.ab_field_must_not_be_empty), Toast.LENGTH_LONG).show();
+        if (Utilities.isNullOrWhitespace(title) || authors.length == 0) {
             ok = false;
         }
 
         for (String author : authors) {
             if (Utilities.isNullOrWhitespace(author)) {
-                Toast.makeText(getContext(), getResources().getString(R.string.ab_field_must_not_be_empty), Toast.LENGTH_LONG).show();
                 ok = false;
                 break;
             }
         }
 
+        if (!ok) {
+            Toast.makeText(getContext(), getResources().getString(R.string.ab_field_must_not_be_empty), Toast.LENGTH_LONG).show();
+        }
         return ok && isbn.length() == 0 || Utilities.validateIsbn(isbn);
     }
 }
