@@ -13,7 +13,6 @@ import com.google.firebase.database.FirebaseDatabase;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
@@ -58,8 +57,11 @@ public class Book implements Serializable {
                 @NonNull Resources resources) {
         this.data = new Data();
 
-        for (String author : authors)
-            this.data.bookInfo.authors.add(Utilities.trimString(author, resources.getInteger(R.integer.max_length_author)));
+        for (String author : authors) {
+            if (!Utilities.isNullOrWhitespace(author)) {
+                this.data.bookInfo.authors.add(Utilities.trimString(author, resources.getInteger(R.integer.max_length_author)));
+            }
+        }
 
         this.data.bookInfo.isbn = isbn;
         this.data.bookInfo.title = Utilities.trimString(title, resources.getInteger(R.integer.max_length_title));
@@ -68,7 +70,11 @@ public class Book implements Serializable {
         this.data.bookInfo.year = year;
 
         this.data.bookInfo.conditions = conditions;
-        this.data.bookInfo.tags = tags;
+        for (String tag : tags) {
+            if (!Utilities.isNullOrWhitespace(tag)) {
+                this.data.bookInfo.tags.add(Utilities.trimString(tag, resources.getInteger(R.integer.max_length_tag)));
+            }
+        }
     }
 
     public String getIsbn() {
@@ -158,12 +164,16 @@ public class Book implements Serializable {
             public BookInfo() {
                 this.isbn = null;
                 this.title = null;
-                this.authors = new LinkedList<>();
+                this.authors = new ArrayList<>();
                 this.language = null;
                 this.publisher = null;
                 this.year = INITIAL_YEAR;
                 this.conditions = null;
+<<<<<<< HEAD
                 this.tags = new LinkedList<>();
+=======
+                this.tags = new ArrayList<>();
+>>>>>>> ed5178bd0707a468f20e10cf0374ca9d12669a55
             }
         }
     }
