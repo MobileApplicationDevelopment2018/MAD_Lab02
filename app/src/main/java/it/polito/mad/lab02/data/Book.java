@@ -169,11 +169,7 @@ public class Book implements Serializable {
                 this.publisher = null;
                 this.year = INITIAL_YEAR;
                 this.conditions = null;
-<<<<<<< HEAD
-                this.tags = new LinkedList<>();
-=======
                 this.tags = new ArrayList<>();
->>>>>>> ed5178bd0707a468f20e10cf0374ca9d12669a55
             }
         }
     }
