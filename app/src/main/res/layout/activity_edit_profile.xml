@@ -170,7 +170,6 @@
         android:clickable="true"
         android:focusable="true"
         android:src="@drawable/ic_photo_camera_white_24dp"
-        app:backgroundTint="@color/colorPrimary"
         app:layout_anchor="@id/ep_profile_picture"
         app:layout_anchorGravity="bottom|right|end" />
 </android.support.design.widget.CoordinatorLayout>

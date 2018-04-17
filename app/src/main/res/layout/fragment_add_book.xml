@@ -3,12 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_marginLeft="16dp"
-
-    android:layout_marginRight="16dp"
-    android:layout_marginTop="16dp"
     android:orientation="vertical"
+    android:padding="16dp"
     tools:context=".AddBookFragment">
 
     <ScrollView
@@ -22,349 +18,65 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center_horizontal"
-                android:orientation="horizontal"
-                android:weightSum="10"
-                android:paddingTop="5dp">
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
 
                 <android.support.design.widget.TextInputLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="16dp"
                     android:layout_weight="8">
+
                     <android.support.design.widget.TextInputEditText
                         android:id="@+id/ab_isbn_edit"
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="start"
+                        android:layout_gravity="start|center_vertical"
                         android:hint="@string/hint_isbn"
                         android:inputType="numberDecimal" />
                 </android.support.design.widget.TextInputLayout>
 
                 <Button
                     android:id="@+id/ab_barcode_scan"
+                    style="@style/Widget.AppCompat.Button.Colored"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="end"
-                    android:layout_weight="0.5"
-                    android:background="@drawable/ab_custom_button_green"
-                    android:text="@string/add_book_scan"
-                    android:textColor="#FFFFFF" />
+                    android:layout_gravity="end|center_vertical"
+                    android:layout_weight="2"
+                    android:text="@string/add_book_scan" />
             </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
+            <Switch
+                android:id="@+id/ab_autofill"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="5dp"
-                android:gravity="center_horizontal"
-                android:weightSum="10">
+                android:layout_gravity="center_horizontal|center_vertical"
+                android:checked="true"
+                android:paddingBottom="16dp"
+                android:paddingTop="16dp"
+                android:switchPadding="32dp"
+                android:text="@string/auto_fill"
+                android:textAppearance="@style/TextAppearance.AppCompat.Title"
+                android:textColor="@color/colorTextAccent" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:layout_weight="8"
-                        android:text="@string/auto_fill" />
-
-                    <Switch
-                        android:id="@+id/ab_autofill"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:checked="true"
-                        android:gravity="start" />
-            </LinearLayout>
-
-            <ViewSwitcher xmlns:android="http://schemas.android.com/apk/res/android"
+            <ViewSwitcher
                 android:id="@+id/ab_view_switcher"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:measureAllChildren="false">
+                android:measureAllChildren="false"
+                android:paddingBottom="8dp"
+                android:paddingTop="8dp">
 
-                <LinearLayout
-                    android:id="@+id/ab_autofill_book_view"
+                <include
+                    layout="@layout/fragment_add_book_autofill"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="5dp">
+                    android:layout_height="wrap_content" />
 
-                    <Button
-                        android:id="@+id/ab_start_query"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:background="@drawable/ab_custom_button_green"
-                        android:enabled="false"
-                        android:text="@string/add_book_search_isbn"
-                        android:textColor="#FFFFFF" />
-
-                    <LinearLayout
-                        android:id="@+id/ab_autofilled_info_wrapper"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:paddingTop="16dp"
-                        android:visibility="gone">
-
-                        <RelativeLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="match_parent"
-                            android:padding="4dp">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/book_title"
-                                android:textColor="@color/colorTextAccent" />
-
-                            <TextView
-                                android:id="@+id/ab_title"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_alignParentRight="true"
-                                android:freezesText="true" />
-                        </RelativeLayout>
-
-                        <RelativeLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="match_parent"
-                            android:padding="4dp">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/book_author"
-                                android:textColor="@color/colorTextAccent" />
-
-                            <TextView
-                                android:id="@+id/ab_author"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_alignParentRight="true"
-                                android:freezesText="true" />
-                        </RelativeLayout>
-
-                        <RelativeLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="match_parent"
-                            android:padding="4dp">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/book_publisher"
-                                android:textColor="@color/colorTextAccent" />
-
-                            <TextView
-                                android:id="@+id/ab_publisher"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_alignParentRight="true"
-                                android:freezesText="true" />
-                        </RelativeLayout>
-
-                        <RelativeLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="match_parent"
-                            android:padding="4dp">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/book_edition_year"
-                                android:textColor="@color/colorTextAccent" />
-
-                            <TextView
-                                android:id="@+id/ab_edition_year"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_alignParentRight="true"
-                                android:freezesText="true" />
-                        </RelativeLayout>
-
-                        <RelativeLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="match_parent"
-                            android:padding="4dp">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/hint_language"
-                                android:textColor="@color/colorTextAccent" />
-
-                            <TextView
-                                android:id="@+id/ab_language"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_alignParentRight="true"
-                                android:freezesText="true" />
-                        </RelativeLayout>
-                    </LinearLayout>
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/ab_input_book_view"
+                <include
+                    layout="@layout/fragment_add_book_no_autofill"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-
-                    <android.support.design.widget.TextInputLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:paddingTop="5dp">
-
-                        <android.support.design.widget.TextInputEditText
-                            android:id="@+id/ab_title_edit"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:hint="@string/hint_title"
-                            android:inputType="text" />
-
-                    </android.support.design.widget.TextInputLayout>
-
-                    <android.support.design.widget.TextInputLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:paddingTop="5dp">
-
-                        <android.support.design.widget.TextInputEditText
-                            android:id="@+id/ab_author_edit"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:hint="@string/hint_author"
-                            android:inputType="text" />
-
-                    </android.support.design.widget.TextInputLayout>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:paddingTop="5dp"
-                        android:weightSum="10">
-
-                        <android.support.design.widget.TextInputLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="8"
-                            android:paddingTop="5dp">
-
-                            <android.support.design.widget.TextInputEditText
-                                android:id="@+id/ab_publisher_edit"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:hint="@string/hint_publisher"
-                                android:inputType="text" />
-
-                        </android.support.design.widget.TextInputLayout>
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="bottom"
-                            android:layout_marginBottom="8dp"
-                            android:layout_weight="2"
-                            android:orientation="vertical"
-                            android:paddingEnd="-2dp"
-                            android:paddingStart="8dp">
-
-                            <TextView
-                                style="@style/InputLabel"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="@string/hint_editionYear" />
-
-                            <Spinner
-                                android:id="@+id/ab_edition_year_edit"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:entries="@array/conditions"
-                                android:prompt="@string/hint_editionYear" />
-                        </LinearLayout>
-                    </LinearLayout>
-
-                    <android.support.design.widget.TextInputLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:paddingTop="5dp">
-
-                        <android.support.design.widget.TextInputEditText
-                            android:id="@+id/ab_language_edit"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:hint="@string/hint_language"
-                            android:inputType="numberDecimal" />
-
-                    </android.support.design.widget.TextInputLayout>
-                </LinearLayout>
+                    android:layout_height="wrap_content" />
             </ViewSwitcher>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="5dp"
-                android:orientation="vertical"
-                android:paddingTop="5dp">
-
-                <TextView
-                    style="@style/InputLabel"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/hint_condition" />
-
-                <Spinner
-                    android:id="@+id/add_book_condition_edit"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:entries="@array/conditions"
-                    android:prompt="@string/hint_condition" />
-            </LinearLayout>
-
-            <me.gujun.android.taggroup.TagGroup
-                android:id="@+id/tag_group"
-                style="@style/TagGroup"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:focusedByDefault="false"
-                android:inputType="text"
-                android:padding="5dp"
-                app:atg_isAppendMode="true" />
-
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_gravity="center"
-                android:layout_marginTop="8dp"
-                android:layout_weight="1"
-                android:orientation="horizontal"
-                android:padding="8dp">
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_centerInParent="true">
-
-                    <Button
-                        android:id="@+id/ab_add_book"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="16dp"
-                        android:layout_marginRight="16dp"
-                        android:background="@drawable/ab_custom_button_green"
-                        android:enabled="false"
-                        android:text="@string/add_book_confirm"
-                        android:textColor="#FFFFFF" />
-
-                    <Button
-                        android:id="@+id/ab_clear_fields"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/ab_custom_button_white"
-                        android:enabled="false"
-                        android:text="@string/add_book_cancel"
-                        android:textColor="#8BC34A" />
-
-                </LinearLayout>
-            </RelativeLayout>
         </LinearLayout>
     </ScrollView>
 </FrameLayout>

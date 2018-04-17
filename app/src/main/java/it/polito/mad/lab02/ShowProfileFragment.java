@@ -52,6 +52,7 @@ public class ShowProfileFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
 
         assert getActivity() != null;
+        assert getView() != null;
         assert getArguments() != null;
 
         final UserProfile profile = (UserProfile) getArguments().getSerializable(UserProfile.PROFILE_INFO_KEY);
@@ -63,7 +64,7 @@ public class ShowProfileFragment extends Fragment {
         fillViews(profile);
 
         // MailTo button
-        final ImageButton mailToButton = getActivity().findViewById(R.id.sp_mail_icon);
+        final ImageButton mailToButton = getView().findViewById(R.id.sp_mail_icon);
         mailToButton.setVisibility(profile.isLocal() ? View.GONE : View.VISIBLE);
         mailToButton.setOnClickListener(v -> {
             Uri uri = Uri.parse("mailto:" + profile.getEmail());
@@ -74,7 +75,7 @@ public class ShowProfileFragment extends Fragment {
         });
 
         // ShowCity button
-        final ImageButton showCityButton = getActivity().findViewById(R.id.sp_locate_icon);
+        final ImageButton showCityButton = getView().findViewById(R.id.sp_locate_icon);
         showCityButton.setOnClickListener(v -> {
             Uri uri = Uri.parse("http://maps.google.co.in/maps?q=" + profile.getLocation());
             Intent showCity = new Intent(Intent.ACTION_VIEW, uri);
@@ -91,18 +92,18 @@ public class ShowProfileFragment extends Fragment {
         super.onCreateOptionsMenu(menu, inflater);
     }
 
-    private void fillViews(UserProfile profile) {
-        assert getActivity() != null;
+    private void fillViews(@NonNull UserProfile profile) {
+        assert getView() != null;
 
-        TextView username = getActivity().findViewById(R.id.sp_username);
-        TextView location = getActivity().findViewById(R.id.sp_location);
-        TextView biography = getActivity().findViewById(R.id.sp_description);
-        ImageView imageView = getActivity().findViewById(R.id.sp_profile_picture);
+        TextView username = getView().findViewById(R.id.sp_username);
+        TextView location = getView().findViewById(R.id.sp_location);
+        TextView biography = getView().findViewById(R.id.sp_description);
+        ImageView imageView = getView().findViewById(R.id.sp_profile_picture);
 
-        RatingBar rating = getActivity().findViewById(R.id.sp_rating_bar);
-        TextView lentBooks = getActivity().findViewById(R.id.sp_lent_books_number);
-        TextView borrowedBooks = getActivity().findViewById(R.id.sp_borrowed_books_number);
-        TextView toBeReturnedBooks = getActivity().findViewById(R.id.sp_to_be_returned_number);
+        RatingBar rating = getView().findViewById(R.id.sp_rating_bar);
+        TextView lentBooks = getView().findViewById(R.id.sp_lent_books_number);
+        TextView borrowedBooks = getView().findViewById(R.id.sp_borrowed_books_number);
+        TextView toBeReturnedBooks = getView().findViewById(R.id.sp_to_be_returned_number);
 
         username.setText(profile.getUsername());
         location.setText(profile.getLocation());
