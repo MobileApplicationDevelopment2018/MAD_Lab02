@@ -40,7 +40,7 @@
 
                 <Button
                     android:id="@+id/ab_barcode_scan"
-                    style="@style/Widget.AppCompat.Button.Colored"
+                    style="@style/Widget.AppCompat.Button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="end|center_vertical"
@@ -142,12 +142,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:weightSum="2"
+                android:baselineAligned="false"
                 android:orientation="horizontal">
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:layout_marginRight="16dp"
                     android:orientation="vertical">
 
                     <TextView
@@ -158,16 +160,14 @@
 
                     <Spinner
                         android:id="@+id/ab_edition_year_edit"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:gravity="end"
-                        android:prompt="@string/hint_editionYear"
-                        android:textAlignment="textEnd" />
+                        android:prompt="@string/hint_editionYear" />
                 </LinearLayout>
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:orientation="vertical">
 
@@ -179,12 +179,10 @@
 
                     <Spinner
                         android:id="@+id/ab_conditions"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:entries="@array/conditions"
-                        android:gravity="end"
-                        android:prompt="@string/hint_condition"
-                        android:textAlignment="textEnd" />
+                        android:prompt="@string/hint_condition" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -233,7 +231,7 @@
 
                 <Button
                     android:id="@+id/ab_clear_fields"
-                    style="@style/Widget.AppCompat.Button.Colored"
+                    style="@style/Widget.AppCompat.Button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/add_book_cancel" />

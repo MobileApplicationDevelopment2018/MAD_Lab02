@@ -1,11 +1,20 @@
 package it.polito.mad.lab02;
 
+import android.Manifest;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -22,6 +31,8 @@ import com.google.android.gms.vision.barcode.Barcode;
 import com.google.api.services.books.model.Volume;
 import com.google.api.services.books.model.Volumes;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -31,17 +42,27 @@ import java.util.Locale;
 
 import it.polito.mad.lab02.barcodereader.BarcodeCaptureActivity;
 import it.polito.mad.lab02.data.Book;
+import it.polito.mad.lab02.utils.FragmentDialog;
 import it.polito.mad.lab02.utils.IsbnQuery;
+import it.polito.mad.lab02.utils.PictureUtilities;
 import it.polito.mad.lab02.utils.Utilities;
 import me.gujun.android.taggroup.TagGroup;
 
-public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener {
+import static android.app.Activity.RESULT_OK;
 
-    private static final String TASK_RUNNING = "task_running";
+public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID> implements IsbnQuery.TaskListener {
+
+    private static final int CAMERA = 2;
+    private static final int GALLERY = 3;
+    private static final int PERMISSIONS_REQUEST_EXTERNAL_STORAGE = 4;
+    private static final int PERMISSIONS_REQUEST_CAMERA = 5;
     private static final int RC_BARCODE_CAPTURE = 9001;
 
-    private ProgressDialog progressDialog;
-    private boolean isTaskRunning;
+    private static final String BOOK_KEY = "book";
+    private static final String TO_BE_DELETED_KEY = "to_be_deleted";
+
+    private static final String IMAGE_PATH_TMP = "book_picture_tmp";
+
     private IsbnQuery isbnQuery;
 
     private EditText isbnEdit, titleEt, publisherEt, languageEt;
@@ -49,6 +70,8 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
     private Button scanBarcodeBtn, addBookBtn, resetBtn, autocompleteBtn;
     private TagGroup tagGroup, authorEtGroup;
 
+    Book book;
+    boolean fileToBeDeleted;
     private Locale currentLocale;
 
     public static AddBookFragment newInstance() {
@@ -81,14 +104,12 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
         });
 
         autocompleteBtn.setOnClickListener(v -> {
-            if (!isTaskRunning) {
-                isbnQuery = new IsbnQuery(this);
-                isbnQuery.execute(isbnEdit.getText().toString());
-            }
+            isbnQuery = new IsbnQuery(this);
+            isbnQuery.execute(isbnEdit.getText().toString());
         });
 
         resetBtn.setOnClickListener(v -> clearViews(true));
-        addBookBtn.setOnClickListener(v -> uploadBook());
+        addBookBtn.setOnClickListener(v -> startBookUpload());
 
         // Tag watcher
         tagGroup.setOnClickListener(v -> ((TagGroup) v.findViewById(R.id.tag_group)).submitTag());
@@ -118,6 +139,13 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
         fillSpinnerYear(view);
         currentLocale = getResources().getConfiguration().locale;
 
+        book = null;
+        fileToBeDeleted = false;
+        if (savedInstanceState != null) {
+            book = (Book) savedInstanceState.getSerializable(BOOK_KEY);
+            fileToBeDeleted = savedInstanceState.getBoolean(TO_BE_DELETED_KEY, false);
+        }
+
         return view;
     }
 
@@ -127,37 +155,17 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
 
         assert getActivity() != null;
         getActivity().setTitle(R.string.add_book);
-
-        if (savedInstanceState != null && savedInstanceState.getBoolean(TASK_RUNNING)) {
-            progressDialog = ProgressDialog.show(getActivity(),
-                    getResources().getString(R.string.add_book_isbn_loading_title),
-                    getResources().getString(R.string.add_book_isbn_loading_message));
-        }
-    }
-
-    @Override
-    public void onDetach() {
-        if (progressDialog != null && progressDialog.isShowing()) {
-            progressDialog.dismiss();
-        }
-        super.onDetach();
     }
 
     @Override
     public void onTaskStarted() {
-        isTaskRunning = true;
-        progressDialog = ProgressDialog.show(getActivity(),
-                getResources().getString(R.string.add_book_isbn_loading_title),
-                getResources().getString(R.string.add_book_isbn_loading_message));
+        openDialog(DialogID.DIALOG_LOADING, true);
     }
 
     @Override
     public void onTaskFinished(Volumes volumes) {
-        if (progressDialog != null) {
-            progressDialog.dismiss();
-        }
+        this.closeDialog();
 
-        isTaskRunning = false;
         if (volumes == null) {
             Toast.makeText(getContext(), getResources().getString(R.string.add_book_isbn_query_failed), Toast.LENGTH_LONG).show();
         } else if (volumes.getTotalItems() == 0 || volumes.getItems() == null) {
@@ -174,29 +182,58 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putBoolean(TASK_RUNNING, isTaskRunning);
+
+        outState.putSerializable(BOOK_KEY, book);
+        outState.putBoolean(TO_BE_DELETED_KEY, fileToBeDeleted);
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == RC_BARCODE_CAPTURE) {
-            if (resultCode == CommonStatusCodes.SUCCESS) {
-                if (data != null) {
 
-                    Barcode barcode = data.getParcelableExtra(BarcodeCaptureActivity.BarcodeObject);
-                    if (!barcode.displayValue.equals(isbnEdit.getText().toString())) {
-                        clearViews(false);
+        switch (requestCode) {
+            case RC_BARCODE_CAPTURE:
+                if (resultCode == CommonStatusCodes.SUCCESS) {
+                    if (data != null) {
+
+                        Barcode barcode = data.getParcelableExtra(BarcodeCaptureActivity.BarcodeObject);
+                        if (!barcode.displayValue.equals(isbnEdit.getText().toString())) {
+                            clearViews(false);
+                        }
+
+                        isbnEdit.setText(barcode.displayValue);
                     }
-
-                    isbnEdit.setText(barcode.displayValue);
+                } else {
+                    Toast.makeText(this.getContext(), String.format(getString(R.string.barcode_error),
+                            CommonStatusCodes.getStatusCodeString(resultCode)), Toast.LENGTH_LONG)
+                            .show();
                 }
-            } else {
-                Toast.makeText(this.getContext(), String.format(getString(R.string.barcode_error),
-                        CommonStatusCodes.getStatusCodeString(resultCode)), Toast.LENGTH_LONG)
-                        .show();
-            }
-        } else {
-            super.onActivityResult(requestCode, resultCode, data);
+                break;
+
+            case CAMERA:
+
+                if (resultCode == RESULT_OK) {
+                    assert getActivity() != null;
+                    File imageFileCamera = new File(getActivity().getApplicationContext()
+                            .getExternalFilesDir(Environment.DIRECTORY_PICTURES), IMAGE_PATH_TMP);
+
+                    if (imageFileCamera.exists()) {
+                        fileToBeDeleted = true;
+                        processPicture(imageFileCamera.getPath());
+                    }
+                } else {
+                    Toast.makeText(getContext(), "Operation aborted", Toast.LENGTH_LONG).show();
+                }
+                break;
+
+
+            case GALLERY:
+                if (resultCode == RESULT_OK && data != null && data.getData() != null) {
+                    processPicture(data.getData().getPath());
+                }
+                break;
+
+            default:
+                super.onActivityResult(requestCode, resultCode, data);
         }
     }
 
@@ -213,7 +250,7 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
         tagGroup.setTags(new LinkedList<>());
     }
 
-    private void uploadBook() {
+    private void startBookUpload() {
 
         authorEtGroup.submitTag();
         tagGroup.submitTag();
@@ -230,17 +267,51 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
 
         String condition = conditionSpinner.getSelectedItem().toString();
         List<String> tags = Arrays.asList(tagGroup.getTags());
-        Book book = new Book(isbn, title, Arrays.asList(authors), language, publisher, year,
+        book = new Book(isbn, title, Arrays.asList(authors), language, publisher, year,
                 condition, tags, getResources());
 
-        book.saveToFirebase()
-                .addOnSuccessListener((v) -> {
+        openDialog(DialogID.DIALOG_ADD_PICTURE, true);
+    }
+
+    private void processPicture(@NonNull String imagePath) {
+        new PictureUtilities.CompressImageAsync(
+                imagePath, Book.BOOK_PICTURE_SIZE, 0,
+                Book.BOOK_PICTURE_QUALITY, picture -> {
+
+            if (fileToBeDeleted) {
+                assert getActivity() != null;
+                File tmpImageFile = new File(getActivity().getApplicationContext()
+                        .getExternalFilesDir(Environment.DIRECTORY_PICTURES), IMAGE_PATH_TMP);
+                tmpImageFile.deleteOnExit();
+                fileToBeDeleted = false;
+            }
+
+            if (picture == null) {
+                Toast.makeText(getContext(), getResources().getString(R.string.add_book_error),
+                        Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            uploadBook(picture.getPicture());
+        })
+                .execute();
+    }
+
+    private void uploadBook() {
+        uploadBook(null);
+    }
+
+    private void uploadBook(ByteArrayOutputStream picture) {
+        openDialog(DialogID.DIALOG_SAVING, true);
+        book.saveToFirebase(picture)
+                .addOnCompleteListener(v -> closeDialog())
+                .addOnSuccessListener(v -> {
                     Toast.makeText(getContext(), getResources().getString(R.string.add_book_saved), Toast.LENGTH_LONG).show();
                     clearViews(true);
                 })
-                .addOnFailureListener((v) -> Toast.makeText(getContext(), getResources().getString(R.string.add_book_error),
+                .addOnFailureListener(v ->
+                        Toast.makeText(getContext(), getResources().getString(R.string.add_book_error),
                         Toast.LENGTH_LONG).show());
-
     }
 
     private void findViews(View view) {
@@ -314,5 +385,84 @@ public class AddBookFragment extends Fragment implements IsbnQuery.TaskListener 
             Toast.makeText(getContext(), getResources().getString(R.string.ab_field_must_not_be_empty), Toast.LENGTH_LONG).show();
         }
         return ok && isbn.length() == 0 || Utilities.validateIsbn(isbn);
+    }
+
+    private void cameraTakePicture() {
+        assert getActivity() != null;
+        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (cameraIntent.resolveActivity(getActivity().getPackageManager()) != null) {
+
+            File imageFile = new File(getActivity().getApplicationContext()
+                    .getExternalFilesDir(Environment.DIRECTORY_PICTURES), IMAGE_PATH_TMP);
+            Uri imageUri = FileProvider.getUriForFile(getActivity(),
+                    BuildConfig.APPLICATION_ID.concat(".fileprovider"), imageFile);
+
+            cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
+            startActivityForResult(cameraIntent, CAMERA);
+        }
+    }
+
+    private void galleryLoadPicture() {
+        assert getActivity() != null;
+        Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        if (galleryIntent.resolveActivity(getActivity().getPackageManager()) != null) {
+            startActivityForResult(galleryIntent, GALLERY);
+        }
+    }
+
+    @Override
+    protected void openDialog(@NonNull DialogID dialogId, boolean dialogPersist) {
+        super.openDialog(dialogId, dialogPersist);
+
+        Dialog dialogInstance = null;
+        switch (dialogId) {
+            case DIALOG_LOADING:
+                dialogInstance = ProgressDialog.show(getContext(),
+                        getResources().getString(R.string.add_book_isbn_loading_title),
+                        getResources().getString(R.string.add_book_isbn_loading_message), true);
+                break;
+
+            case DIALOG_SAVING:
+                dialogInstance = ProgressDialog.show(getContext(), null,
+                        getString(R.string.saving_data), true);
+                break;
+
+            case DIALOG_ADD_PICTURE:
+                dialogInstance = new AlertDialog.Builder(getContext())
+                        .setMessage("Would you like to attach a picture of the book?")
+                        .setPositiveButton("Yes, take picture", (dialog, which) -> {
+                            assert getActivity() != null;
+                            if (ContextCompat.checkSelfPermission(getActivity(),
+                                    android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                                ActivityCompat.requestPermissions(getActivity(),
+                                        new String[]{Manifest.permission.CAMERA}, PERMISSIONS_REQUEST_CAMERA);
+                            } else {
+                                cameraTakePicture();
+                            }
+                        })
+                        .setNeutralButton("Yes, open gallery", (dialog, which) -> {
+                            assert getActivity() != null;
+                            if (ContextCompat.checkSelfPermission(getActivity(),
+                                    Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                                ActivityCompat.requestPermissions(getActivity(),
+                                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_REQUEST_EXTERNAL_STORAGE);
+                            } else {
+                                galleryLoadPicture();
+                            }
+                        })
+                        .setNegativeButton("No", (dialog, which) -> uploadBook())
+                        .show();
+        }
+
+        if (dialogInstance != null) {
+            setDialogInstance(dialogInstance);
+        }
+
+    }
+
+    public enum DialogID {
+        DIALOG_LOADING,
+        DIALOG_SAVING,
+        DIALOG_ADD_PICTURE,
     }
 }

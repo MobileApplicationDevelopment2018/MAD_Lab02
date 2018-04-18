@@ -17,7 +17,7 @@ public class PictureUtilities {
     private static CompressedImage compressImage(String imagePath, int pictureSize,
                                                  int thumbnailSize, int quality) {
 
-        if (imagePath == null || pictureSize <= 0 || thumbnailSize <= 0 ||
+        if (imagePath == null || pictureSize <= 0 || thumbnailSize < 0 ||
                 quality < 0 || quality > 100) {
             return null;
         }
@@ -27,23 +27,29 @@ public class PictureUtilities {
             return null;
         }
 
-        float thumbnailRatio = (float) thumbnailSize / Math.max(pictureBitmap.getWidth(), pictureBitmap.getHeight());
-        if (thumbnailRatio > 1) {
-            thumbnailRatio = 1;
-        }
-        Bitmap thumbnailBitmap = Bitmap.createScaledBitmap(pictureBitmap,
-                (int) (pictureBitmap.getWidth() * thumbnailRatio),
-                (int) (pictureBitmap.getHeight() * thumbnailRatio),
-                true);
-        if (thumbnailBitmap == null) {
-            return null;
-        }
-
         ByteArrayOutputStream picture = new ByteArrayOutputStream();
         pictureBitmap.compress(Bitmap.CompressFormat.WEBP, quality, picture);
 
-        ByteArrayOutputStream thumbnail = new ByteArrayOutputStream();
-        thumbnailBitmap.compress(Bitmap.CompressFormat.WEBP, quality / 2, thumbnail);
+        // Process the thumbnail
+        ByteArrayOutputStream thumbnail = null;
+        if (thumbnailSize > 0) {
+
+            float thumbnailRatio = (float) thumbnailSize / Math.max(pictureBitmap.getWidth(), pictureBitmap.getHeight());
+            if (thumbnailRatio > 1) {
+                thumbnailRatio = 1;
+            }
+            Bitmap thumbnailBitmap = Bitmap.createScaledBitmap(pictureBitmap,
+                    (int) (pictureBitmap.getWidth() * thumbnailRatio),
+                    (int) (pictureBitmap.getHeight() * thumbnailRatio),
+                    true);
+
+            if (thumbnailBitmap == null) {
+                return null;
+            }
+
+            thumbnail = new ByteArrayOutputStream();
+            thumbnailBitmap.compress(Bitmap.CompressFormat.WEBP, quality / 2, thumbnail);
+        }
 
         return new CompressedImage(picture, thumbnail);
     }
@@ -117,7 +123,7 @@ public class PictureUtilities {
         private final ByteArrayOutputStream thumbnail;
 
         CompressedImage(@NonNull ByteArrayOutputStream picture,
-                        @NonNull ByteArrayOutputStream thumbnail) {
+                        ByteArrayOutputStream thumbnail) {
             this.picture = picture;
             this.thumbnail = thumbnail;
         }

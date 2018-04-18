@@ -31,7 +31,7 @@ public class UserProfile implements Serializable {
 
     public static final String FIREBASE_USERS_KEY = "users";
     public static final String FIREBASE_DATA_KEY = "data";
-    public static final String FIREBASE_PROFILE_KEY = "profile";
+    private static final String FIREBASE_PROFILE_KEY = "profile";
     public static final String FIREBASE_BOOKS_KEY = "books";
 
     private static final String FIREBASE_STORAGE_USERS_FOLDER = "users";

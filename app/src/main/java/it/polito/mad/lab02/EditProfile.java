@@ -196,8 +196,6 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
         if (resultCode == RESULT_OK) {
             switch (requestCode) {
                 case CAMERA:
@@ -230,7 +228,7 @@ public class EditProfile extends AppCompatActivityDialog<EditProfile.DialogID> {
                     break;
 
                 default:
-                    break;
+                    super.onActivityResult(requestCode, resultCode, data);
 
             }
         }
