@@ -107,4 +107,9 @@
     <string name="hint_tags">Tags</string>
     <string name="hint_author_add">Add author</string>
     <string name="ab_add_tag">Add Tag</string>
+    <string name="would_take_picture">Would you like to add a picture?</string>
+    <string name="take_picture_camera">Yes, take from camera</string>
+    <string name="take_picture_gallery">Yes, take from gallery</string>
+    <string name="no">No</string>
+    <string name="operation_aborted">Operation aborted</string>
 </resources>

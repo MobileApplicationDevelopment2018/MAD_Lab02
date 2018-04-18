@@ -17,6 +17,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -223,26 +224,18 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID> im
                         processPicture(imageFileCamera.getPath());
                     }
                 } else {
-                    Toast.makeText(getContext(), "Operation aborted", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getContext(), R.string.operation_aborted, Toast.LENGTH_LONG).show();
                 }
                 break;
 
 
             case GALLERY:
                 if (resultCode == RESULT_OK && data != null && data.getData() != null) {
-                    // Move the image to a temporary location
-                    File imageFileGallery = new File(getActivity().getApplicationContext()
-                            .getExternalFilesDir(Environment.DIRECTORY_PICTURES), IMAGE_PATH_TMP);
-                    try {
-                        Utilities.copyFile(new File(Utilities.getRealPathFromURI(getActivity(),
-                                data.getData())), imageFileGallery);
-                    } catch (IOException e) {
-                        Toast.makeText(getContext(), "Operation aborted", Toast.LENGTH_LONG).show();
-                    }
 
-                    processPicture(imageFileGallery.getAbsolutePath());
+                    processPicture(Utilities.getRealPathFromURI(getActivity(), data.getData()));
+
                 }  else {
-                    Toast.makeText(getContext(), "Operation aborted", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getContext(), R.string.operation_aborted, Toast.LENGTH_LONG).show();
                 }
                 break;
 
@@ -443,8 +436,8 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID> im
 
             case DIALOG_ADD_PICTURE:
                 dialogInstance = new AlertDialog.Builder(getContext())
-                        .setMessage("Would you like to attach a picture of the book?")
-                        .setPositiveButton("Yes, take picture", (dialog, which) -> {
+                        .setMessage(R.string.would_take_picture)
+                        .setPositiveButton(R.string.take_picture_camera, (dialog, which) -> {
                             assert getActivity() != null;
                             if (ContextCompat.checkSelfPermission(getActivity(),
                                     android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
@@ -454,7 +447,7 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID> im
                                 cameraTakePicture();
                             }
                         })
-                        .setNeutralButton("Yes, open gallery", (dialog, which) -> {
+                        .setNegativeButton(R.string.take_picture_gallery, (dialog, which) -> {
                             assert getActivity() != null;
                             if (ContextCompat.checkSelfPermission(getActivity(),
                                     Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
@@ -464,7 +457,7 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID> im
                                 galleryLoadPicture();
                             }
                         })
-                        .setNegativeButton("No", (dialog, which) -> uploadBook())
+                        .setNeutralButton(R.string.no, (dialog, which) -> uploadBook())
                         .show();
         }
 
