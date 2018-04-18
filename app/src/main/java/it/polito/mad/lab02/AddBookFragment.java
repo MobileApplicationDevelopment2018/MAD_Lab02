@@ -33,6 +33,7 @@ import com.google.api.services.books.model.Volumes;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -115,6 +116,7 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID> im
         tagGroup.setOnClickListener(v -> ((TagGroup) v.findViewById(R.id.tag_group)).submitTag());
 
         // Fields watchers
+        isbnEdit.requestFocus();
         isbnEdit.addTextChangedListener(new TextWatcher() {
 
             @Override
@@ -228,7 +230,19 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID> im
 
             case GALLERY:
                 if (resultCode == RESULT_OK && data != null && data.getData() != null) {
-                    processPicture(data.getData().getPath());
+                    // Move the image to a temporary location
+                    File imageFileGallery = new File(getActivity().getApplicationContext()
+                            .getExternalFilesDir(Environment.DIRECTORY_PICTURES), IMAGE_PATH_TMP);
+                    try {
+                        Utilities.copyFile(new File(Utilities.getRealPathFromURI(getActivity(),
+                                data.getData())), imageFileGallery);
+                    } catch (IOException e) {
+                        Toast.makeText(getContext(), "Operation aborted", Toast.LENGTH_LONG).show();
+                    }
+
+                    processPicture(imageFileGallery.getAbsolutePath());
+                }  else {
+                    Toast.makeText(getContext(), "Operation aborted", Toast.LENGTH_LONG).show();
                 }
                 break;
 
