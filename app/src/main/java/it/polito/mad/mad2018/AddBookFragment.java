@@ -201,7 +201,11 @@ public class AddBookFragment extends FragmentDialog<AddBookFragment.DialogID> im
                             clearViews(false);
                         }
 
-                        isbnEdit.setText(barcode.displayValue);
+                        if (Utilities.validateIsbn(barcode.displayValue)) {
+                            isbnEdit.setText(barcode.displayValue);
+                            isbnQuery = new IsbnQuery(this);
+                            isbnQuery.execute(isbnEdit.getText().toString());
+                        }
                     }
                 } else {
                     Toast.makeText(this.getContext(), String.format(getString(R.string.barcode_error),
