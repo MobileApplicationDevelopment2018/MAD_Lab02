@@ -1,35 +1,35 @@
 {
   "project_info": {
-    "project_number": "709001734123",
-    "firebase_url": "https://madlab02-2b218.firebaseio.com",
-    "project_id": "madlab02-2b218",
-    "storage_bucket": "madlab02-2b218.appspot.com"
+    "project_number": "381528392245",
+    "firebase_url": "https://mad2018-706e1.firebaseio.com",
+    "project_id": "mad2018-706e1",
+    "storage_bucket": "mad2018-706e1.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:709001734123:android:80b852c7cbc4223a",
+        "mobilesdk_app_id": "1:381528392245:android:bb05a724e78a4d60",
         "android_client_info": {
-          "package_name": "it.polito.mad.lab01"
+          "package_name": "it.polito.mad.mad2018"
         }
       },
       "oauth_client": [
         {
-          "client_id": "709001734123-5avdh5bu69oe7grh5tlql05hukb5tbkj.apps.googleusercontent.com",
+          "client_id": "381528392245-fj2dilferoqgpdloedvrqvr6uu34h0a8.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "it.polito.mad.lab01",
-            "certificate_hash": "947885ba59e96b3bc06c48f8aaf24bc4ec254ca3"
+            "package_name": "it.polito.mad.mad2018",
+            "certificate_hash": "c1278a584832e5f39490d47ce0f4c469d5b4ceab"
           }
         },
         {
-          "client_id": "709001734123-r9uojud01udro2lf2frp6i4o87kioklh.apps.googleusercontent.com",
+          "client_id": "381528392245-4p98q6ucbsuugu2mn43lgs7715eirg1k.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyDi1NIi6riyJqomD6dxzUymoku6VFrQw_E"
+          "current_key": "AIzaSyBUbdxLQbp-t6kyyjwF5RC0Lwyx6pkuLnM"
         }
       ],
       "services": {
@@ -40,7 +40,7 @@
           "status": 2,
           "other_platform_oauth_client": [
             {
-              "client_id": "709001734123-r9uojud01udro2lf2frp6i4o87kioklh.apps.googleusercontent.com",
+              "client_id": "381528392245-4p98q6ucbsuugu2mn43lgs7715eirg1k.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
